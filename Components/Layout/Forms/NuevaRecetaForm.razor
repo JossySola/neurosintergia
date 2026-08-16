@@ -1,0 +1,181 @@
+@rendermode InteractiveServer
+@using friendly_broccoli.Models;
+@using friendly_broccoli.Data.Static;
+@using friendly_broccoli.Data;
+@using friendly_broccoli.Services;
+@using Microsoft.EntityFrameworkCore;
+@inject IDbContextFactory<NeuroContext> DbFactory;
+
+@if (NuevaReceta == null || Lista == null) 
+{
+    <p>Preparando nueva receta...</p>
+}
+else 
+{
+    <EditForm Model=@NuevaReceta FormName="NuevaReceta" OnValidSubmit="HandleValidSubmit">
+        <div class="">
+            <!-- MEDICAMENTO -->
+            <label for="medicamento">Medicamento:</label>
+            <InputSelect @bind-Value="NuevaReceta.Medicamento" @bind-Value:after="OnMedicamentoChange" id="medicamento" required>
+                <option value="">Selecciona un medicamento</option>
+                @foreach (var Medicamento in Lista.ListaMedicamentos) 
+                {
+                    <option value="@Medicamento.Nombre" checked="@Medicamento.Nombre">
+                        @Medicamento.Nombre
+                    </option>
+                }
+            </InputSelect>
+
+            <!-- DOSIS -->
+            <label for="dosis">Dosis:</label>
+            <InputSelect @bind-Value="NuevaReceta.Dosis" @bind-Value:after="OnDosisChange" id="dosis" disabled="@(string.IsNullOrEmpty(NuevaReceta.Medicamento))" required>
+                <option value="">Selecciona la dosis</option>
+                @foreach (var Dosis in DosisDisponibles)
+                {
+                    <option value="@Dosis">@Dosis</option>
+                }
+            </InputSelect>
+
+            <!-- PRESENTACIONES -->
+            <label for="presentacion">Presentación:</label>
+            <InputSelect @bind-Value="NuevaReceta.Presentacion" id="presentacion" disabled="@(string.IsNullOrEmpty(NuevaReceta.Dosis))" required>
+                <option value="">Selecciona la presentación</option>
+                @foreach (var presentacion in PresentacionesFiltradas)
+                {
+                    <option value="@presentacion">@presentacion</option>
+                }
+            </InputSelect>
+        </div>
+        <div>
+            <!-- FRECUENCIA DE ADMINISTRACIÓN -->
+            <label for="cantidad">Administrar</label>
+            <InputNumber @bind-Value="NuevaReceta.Cantidad" min="1" id="cantidad" required />
+            <p>@UnidadMedidaText</p>
+
+            <label for="frecuencia">cada</label>
+            <InputNumber @bind-Value="NuevaReceta.Frecuencia" min="1" id="frecuencia" required />
+            <p>@HoursText</p>
+
+            <label for="sin-suspender">sin suspender</label>
+            <InputCheckbox @bind-Value="NuevaReceta.SinSuspender" id="sin-suspender" />
+
+            <div hidden=@NuevaReceta.SinSuspender>
+                <label for="periodo">por</label>
+                <InputNumber @bind-Value="NuevaReceta.PeriodoTiempo" min="1" id="periodo" disabled=@NuevaReceta.SinSuspender required />
+                <p>@DaysText</p>
+            </div>
+        </div>
+        <label for="notas-adicionales">Notas adicionales:</label>
+        <InputTextArea @bind-Value="NuevaReceta.Nota" id="notas-adicionales" />
+        
+        <ValidationSummary />
+        <button type="submit" disabled=@isSubmitting>Generar</button>
+        <DataAnnotationsValidator />
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public Guid PacienteIdParam { get; set; }
+    [Parameter]
+    public Guid MedicoIdParam { get; set; }
+    protected override void OnInitialized()
+    {
+        NuevaReceta ??= new Recetas()
+        {
+            Id = Guid.CreateVersion7(),
+            Created_At = DateTime.Now,
+            PacienteId = PacienteIdParam,
+            MedicoId = MedicoIdParam,
+            Medicamento = "",
+            Dosis = "",
+            Presentacion = "",
+            Cantidad = 1,
+            Frecuencia = 1,
+            PeriodoTiempo = 1
+        };
+        Lista ??= new();
+        Service ??= new(DbFactory);
+    }
+    private Recetas? NuevaReceta { get; set; }
+    private MedicamentosDisponibles? Lista { get; set; }
+    private CreationServices? Service { get; set; }
+    private bool isSubmitting = false;
+    private string HoursText => (NuevaReceta?.Frecuencia ?? 0) > 1 ? "horas" : "hora";
+    private string DaysText => (NuevaReceta?.PeriodoTiempo ?? 0) > 1 ? "días" : "día";
+
+    private IEnumerable<string> DosisDisponibles
+    {
+        get {
+            if (string.IsNullOrEmpty(NuevaReceta?.Medicamento))
+                return Enumerable.Empty<string>();
+            var selectedMed = Lista?.ListaMedicamentos.FirstOrDefault(m => m.Nombre == NuevaReceta.Medicamento);
+            return selectedMed?.Dosis ?? Enumerable.Empty<string>();
+        }
+    }
+    private IEnumerable<string> PresentacionesFiltradas
+    {
+        get {
+            if (Lista?.Presentaciones == null) return Enumerable.Empty<string>();
+            if (string.IsNullOrEmpty(NuevaReceta?.Dosis)) return Lista.Presentaciones;
+            if (NuevaReceta.Dosis.Contains("ml", StringComparison.OrdinalIgnoreCase))
+            {
+                return Lista.Presentaciones.Where(p =>
+                    p.Contains("inyectable", StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains("solución", StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains("oral", StringComparison.OrdinalIgnoreCase)
+                );
+            }
+            if (NuevaReceta.Dosis.Contains("mcg", StringComparison.OrdinalIgnoreCase))
+            {
+                return Lista.Presentaciones.Where(p => p.Contains("parches", StringComparison.OrdinalIgnoreCase));
+
+            }
+            return Lista.Presentaciones.Where(p =>
+                    p.Contains("comprimidos", StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains("cápsulas", StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains("bucodispersables", StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains("grageas", StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains("inmediata/XR", StringComparison.OrdinalIgnoreCase) ||
+                    p.Contains("sublingual", StringComparison.OrdinalIgnoreCase)
+            );
+        }
+    }
+    private string UnidadMedidaText
+    {
+        get {
+            var pres = NuevaReceta?.Presentacion ?? "";
+            var count = NuevaReceta?.Cantidad ?? 0;
+            string baseWord = "tableta";
+            if (pres.Contains("oral", StringComparison.OrdinalIgnoreCase)) baseWord = "mililitro";
+            else if (pres.Contains("cápsulas", StringComparison.OrdinalIgnoreCase)) baseWord = "cápsula";
+            else if (pres.Contains("gotas", StringComparison.OrdinalIgnoreCase)) baseWord = "gota";
+            else if (pres.Contains("grageas", StringComparison.OrdinalIgnoreCase)) baseWord = "gragea";
+            else if (pres.Contains("inyectable", StringComparison.OrdinalIgnoreCase)) baseWord = "ampolleta";
+            else if (pres.Contains("parches", StringComparison.OrdinalIgnoreCase)) baseWord = "parche";
+            if (count == 1) return baseWord;
+            return baseWord == "mililitro" ? "mililitros" : $"{baseWord}s";
+        }
+    }
+    private void OnMedicamentoChange()
+    {
+        NuevaReceta!.Dosis = "";
+        NuevaReceta.Presentacion = "";
+    }
+    private void OnDosisChange()
+    {
+        NuevaReceta!.Presentacion = "";
+    }
+    private async Task HandleValidSubmit() 
+    {
+        try
+        {
+            isSubmitting = true;
+            bool success = await Service!.CrearReceta(NuevaReceta!);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

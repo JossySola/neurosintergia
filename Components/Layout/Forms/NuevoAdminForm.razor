@@ -1,0 +1,97 @@
+@rendermode InteractiveServer
+@using friendly_broccoli.Models;
+@using friendly_broccoli.Data;
+@using friendly_broccoli.Services;
+@using Microsoft.EntityFrameworkCore;
+@using Isopoh.Cryptography.Argon2;
+@inject IDbContextFactory<NeuroContext> DbFactory;
+
+@if (Admin == null) 
+{
+    <p>Cargando registro...</p>
+}
+else
+{
+    <EditForm Model="Admin" FormName="RegistroAdmin">
+        <label for="nombre">Nombre:</label>
+        <InputText @bind-Value="Admin.Nombre" id="nombre" required />
+        <label for="apellido-paterno">Apellido paterno:</label>
+        <InputText @bind-Value="Admin.ApellidoPaterno" id="apellido-paterno" required />
+        <label for="apellido-materno">Apellido materno:</label>
+        <InputText @bind-Value="Admin.ApellidoMaterno" id="apellido-materno" />
+        <label for="curp">CURP:</label>
+        <InputText @bind-Value="Admin.CURP" id="curp" min="18" max="18" required />
+        <label for="nacimiento">Fecha de nacimiento:</label>
+        <InputDate @bind-Value="Admin.FechaNacimiento" id="nacimiento" required />
+        <label for="calle">Calle:</label>
+        <InputText @bind-Value="Admin.Calle" id="calle" required />
+        <label for="num-ext">Número exterior:</label>
+        <InputText @bind-Value="Admin.NumExt" id="num-ext" required />
+        <label for="num-int">Número interior:</label>
+        <InputText @bind-Value="Admin.NumInt" id="num-int" />
+        <label for="colonia">Colonia:</label>
+        <InputText @bind-Value="Admin.Colonia" id="colonia" required />
+        <label for="codigo-postal">Código postal:</label>
+        <InputNumber @bind-Value="Admin.CodigoPostal" id="codigo-postal" required />
+        <label for="telefono">Teléfono:</label>
+        <InputNumber @bind-Value="Admin.Telefono" id="telefono" required />
+        <label for="email">Correo electrónico:</label>
+        <InputText @bind-Value="Admin.Email" id="email" required />
+        <fieldset>
+            <label for="passkey">Crea una contraseña:</label>
+            <div onclick="() => isVisible = !isVisible"><p>Eye Icon</p></div>
+            <InputText type="password" @bind-Value="Admin.Passkey" id="passkey" autocomplete="new-password" min="8" required />
+            <label for="confirm-passkey">Confirm passkey:</label>
+            <InputText type="password" @bind-Value="Confirmation" id="confirm-passkey" autocomplete="new-password" min="8" required />
+        </fieldset>
+
+        <button type="submit" >Registrarse</button>
+        <ValidationSummary />
+        <DataAnnotationsValidator />
+    </EditForm>
+}
+
+@code 
+{
+    private Admins? Admin { get; set; }
+    private CreationServices? Service { get; set; }
+    private bool isSubmitting = false;
+    //private string PasskeyInputType { get; set; } =  isVisible ? "text" : "password";
+    private bool isVisible = false;
+    private string Confirmation { get; set; } = "";
+    protected override void OnInitialized()
+    {
+        Admin ??= new Admins()
+        {
+            Created_At = DateTime.Now,
+            Id = Guid.CreateVersion7(),
+            Nombre = "",
+            ApellidoPaterno = "",
+            CURP = "",
+            FechaNacimiento = new DateOnly(),
+            Calle = "",
+            NumExt = "",
+            Colonia = "",
+            CodigoPostal = 00000,
+            Telefono = 0000000000,
+            Email = "example@domain.com",
+            Passkey = ""
+        };
+        Service ??= new(DbFactory);
+    }
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+            if (Admin.Passkey != Confirmation) return;
+            var hashed = Argon2.Hash(Confirmation);
+            Admin.Passkey = hashed;
+            bool access = await Service!.CrearAdmin(Admin!);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

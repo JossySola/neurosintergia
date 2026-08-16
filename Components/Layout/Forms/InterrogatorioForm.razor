@@ -1,0 +1,135 @@
+@rendermode InteractiveServer
+@using friendly_broccoli.Models;
+@using friendly_broccoli.Services;
+@using friendly_broccoli.Data;
+@using Microsoft.EntityFrameworkCore;
+@inject IDbContextFactory<NeuroContext> DbFactory;
+
+@if (Interrogatorio == null)
+{
+    <p>Preparando formato...</p>
+}
+else
+{
+    <EditForm Model=@Interrogatorio FormName="InterrogatorioInicial" OnValidSubmit="HandleValidSubmit">
+        <label for="habita">Habita en:</label>
+        <InputText @bind-Value="Interrogatorio.HabitaEn" id="habita" />
+        <label for="vive">Vive con:</label>
+        <InputText @bind-Value="Interrogatorio.ViveCon" id="vive" />
+        <label for="profesion">Profesión:</label>
+        <InputText @bind-Value="Interrogatorio.Profesion" id="profesion" />
+        <label for="grupo-etnico">Grupo étnico:</label>
+        <InputSelect @bind-Value="Interrogatorio.GrupoEtnico" id="grupo-etnico">
+            <option value="Mestizo">Mexicano Mestizo</option>
+            <option value="Indigena">Mexicano Indígena</option>
+            <option value="Eurodescendiente">Mexicano Eurodescendiente</option>
+            <option value="Arabe">Mexicano Árabe</option>
+            <option value="Afrodescendiente">Mexicano Afrodescendiente</option>
+            <option value="Asiatico">Mexicano Asiático</option>
+            <option value="Otro">Otro</option>
+        </InputSelect>
+        <fieldset>
+            Antecedentes Heredo-familiares
+            <ul>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Diabetes">Diabetes</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Hipertension">Hipertensión</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Artritis">Artritis</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_DoloresCabeza">Dolores de cabeza</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Epilepsia">Epilepsia</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Alcohol">Consumo de alcohol</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Drogadiccion">Drogadicción</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Tiroides">Tiroides</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Alzheimer">Alzheimer</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Depresion">Depresión</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Ansiedad">Ansiedad</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Demencia">Demencia</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Cancer">Cáncer</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Corazon">Enfermedad en el corazón</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Higado">Enfermedad en el hígado</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Rinon">Enfermedad en el riñón</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Anemia">Anemia</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.HF_Gastritis">Gastritis</InputCheckbox></li>
+            </ul>
+        </fieldset>
+        <fieldset>
+            Antecedentes Personales Patológicos
+            <ul>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Diabetes">Diabetes</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Hipertension">Hipertensión</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Artritis">Artritis</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_DoloresCabeza">Dolores de cabeza</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Epilepsia">Epilepsia</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Alcohol">Consumo de alcohol</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Drogadiccion">Drogadicción</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Tiroides">Tiroides</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Alzheimer">Alzheimer</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Depresion">Depresión</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Ansiedad">Ansiedad</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Demencia">Demencia</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Cancer">Cáncer</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Corazon">Enfermedad en el corazón</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Higado">Enfermedad en el hígado</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Rinon">Enfermedad en el riñón</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Anemia">Anemia</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_Gastritis">Gastritis</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PP_VIH">VIH</InputCheckbox></li>
+            </ul>
+        </fieldset>
+        <fieldset>
+            Antecedentes Personales No Patológicos
+            <ul>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PNP_Alcohol">Consumo de Alcohol</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PNP_Tabaco">Consumo de Tabaco</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PNP_Cafeina">Consumo de Cafeína</InputCheckbox></li>
+                <li><InputCheckbox @bind-Value="Interrogatorio.PNP_Sustancias">Consumo de sustancias psicoactivas</InputCheckbox></li>
+            </ul>
+        </fieldset>
+        <label for="padecimiento">Padecimiento actual:</label>
+        <InputTextArea @bind-Value="Interrogatorio.Padecimiento" id="padecimiento" /> 
+        <label for="tratamiento">Tratamiento actual:</label>
+        <InputTextArea @bind-Value="Interrogatorio.Tratamiento" id="tratamiento" />
+        <label for="resumen">Resumen:</label>
+        <InputTextArea @bind-Value="Interrogatorio.Resumen" id="resumen" />
+        <label for="notas-adicionales">Notas adicionales:</label>
+        <InputTextArea @bind-Value="Interrogatorio.Resumen" id="notas-adicionales" />
+        
+        <ValidationSummary />
+        <button type="submit" disabled=@isSubmitting>Guardar</button>
+        <DataAnnotationsValidator />
+    </EditForm>
+}
+
+@code
+{
+    [Parameter]
+    public Guid PacienteIdParam { get; set; }
+    [Parameter]
+    public Guid MedicoIdParam { get; set; }
+    private InterrogatoriosIniciales? Interrogatorio { get; set; }
+    private CreationServices? Service { get; set; }
+    private bool isSubmitting = false;
+    protected override void OnInitialized()
+    {
+        Interrogatorio ??= new InterrogatoriosIniciales()
+        {
+            Id = Guid.CreateVersion7(),
+            PacienteId = PacienteIdParam,
+            MedicoId = MedicoIdParam,
+            Create_At = DateTime.Now,
+
+        };
+        Service ??= new(DbFactory);
+    }
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+            bool success = await Service!.CrearInterrogatorio(Interrogatorio!);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

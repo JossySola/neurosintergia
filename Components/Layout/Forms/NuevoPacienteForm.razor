@@ -1,0 +1,128 @@
+@rendermode InteractiveServer
+@using friendly_broccoli.Models;
+@using friendly_broccoli.Data;
+@using friendly_broccoli.Data.Static;
+@using friendly_broccoli.Services;
+@using Microsoft.EntityFrameworkCore;
+@inject IDbContextFactory<NeuroContext> DbFactory;
+
+@if (RegistroPaciente == null) 
+{
+    <p>Preparando nuevo registro...</p>
+}
+else
+{
+    <EditForm Model=@RegistroPaciente FormName="RegistroPaciente" OnValidSubmit="HandleValidSubmit">
+        <label for="nombre">Nombre:</label>
+        <InputText @bind-Value="RegistroPaciente.Nombre" id="nombre" autocomplete="given-name" required />
+        <label for="apellido-paterno">Apellido Paterno:</label>
+        <InputText @bind-Value="RegistroPaciente.ApellidoPaterno" id="apellido-paterno" autocomplete="family-name" required />
+        <label for="apellido-materno">Apellido Materno:</label>
+        <InputText @bind-Value="RegistroPaciente.ApellidoMaterno" id="apellido-materno" autocomplete="family-name" />
+        <label for="curp">CURP:</label>
+        <InputText @bind-Value="RegistroPaciente.CURP" id="curp" min="18" max="18" required />
+        <label for="lugar-nacimiento">Lugar de nacimiento:</label>
+        <InputSelect @bind-Value="RegistroPaciente.LugarNacimiento" id="lugar-nacimiento" required>
+            @foreach (var Estado in Ubicaciones.Estados)
+            {
+                <option value="@Estado.Nombre" checked="@Estado.Nombre">@Estado.Nombre</option>
+            }
+        </InputSelect>
+        <label for="fecha-nacimiento">Fecha de nacimiento:</label>
+        <InputDate @bind-Value="RegistroPaciente.FechaNacimiento" id="fecha-nacimiento" required />
+        <label for="sexo">Sexo:</label>
+        <InputSelect @bind-Value="RegistroPaciente.Sexo" id="sexo" required>
+            <option value="Femenino">Femenino</option>
+            <option value="Masculino">Masculino</option>
+        </InputSelect>
+        <fieldset>
+            Domicilio
+            <label for="calle">Calle</label>
+            <InputText @bind-Value="RegistroPaciente.Calle" id="calle" autocomplete="street-address" required />
+            <label for="num-ext">Número exterior:</label>
+            <InputText @bind-Value="RegistroPaciente.NumExt" id="num-ext" required />
+            <label for="num-int">Número interior:</label>
+            <InputText @bind-Value="RegistroPaciente.NumInt" id="num-int" />
+            <label for="colonia">Colonia:</label>
+            <InputText @bind-Value="RegistroPaciente.Colonia" id="colonia" required />
+            <label for="codigo-postal">Código Postal:</label>
+            <InputText @bind-Value="RegistroPaciente.CodigoPostal" id="codigo-postal" autocomplete="postal-code" required />
+        </fieldset>
+        <fieldset>
+            Contacto
+            <label for="telefono">Teléfono fijo:</label>
+            <InputText @bind-Value="RegistroPaciente.Telefono" id="telefono" autocomplete="tel-national" min="10" max="10" required />
+            <label for="celular">Teléfono celular:</label>
+            <InputText @bind-Value="RegistroPaciente.Celular" id="celular" type="tel" min="10" max="10" />
+            <label for="email">Correo electrónico:</label>
+            <InputText @bind-Value="RegistroPaciente.Email" id="email" autocomplete="email" type="email" />
+            <label for="contacto-1">Nombre de contacto de emergencia I:</label>
+            <InputText @bind-Value="RegistroPaciente.ContactoEmergenciaI" id="contacto-1" />
+            <label for="contacto-tel-1">Teléfono de contacto de emergencia I:</label>
+            <InputText @bind-Value="RegistroPaciente.TelefonoEmergenciaI" id="contacto-tel-1" type="tel" min="10" max="10" />
+            <label for="contacto-2">Nombre de contacto de emergencia II:</label>
+            <InputText @bind-Value="RegistroPaciente.ContactoEmergenciaII" id="contacto-2" />
+            <label for="contacto-tel-2">Teléfono de contacto de emergencia II:</label>
+            <InputText @bind-Value="RegistroPaciente.TelefonoEmergenciaII" id="contacto-tel-2" type="tel" min="10" max="10" />
+        </fieldset>
+        
+        <ValidationSummary />
+        <input type="submit" disabled=@isSubmitting value="Save"/>
+        <DataAnnotationsValidator />
+    </EditForm>
+}
+
+@code 
+{
+    private Pacientes? RegistroPaciente { get; set; }
+    private CreationServices? Service { get; set; }
+    private bool isSubmitting = false;
+    protected override void OnInitialized()
+    {
+        RegistroPaciente ??= new Pacientes()
+        {
+            Created_At = DateTime.Now,
+            Id = Guid.CreateVersion7(),
+            Nombre = "",
+            ApellidoPaterno = "", 
+            CURP = "",
+            LugarNacimiento = "",
+            Sexo = "",
+            Calle = "",
+            Colonia = "",
+            Email = "",
+            ContactoEmergenciaI = "",
+            NumExt = "",
+            CodigoPostal = "",
+            Telefono = "",
+            TelefonoEmergenciaI = ""
+        };
+        Service ??= new(DbFactory);
+    }
+    private async Task HandleValidSubmit() 
+    {
+        try
+        {
+            isSubmitting = true;
+            bool access = await Service!.CrearPaciente(RegistroPaciente!);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+    /*
+    private IEnumerable<Estado> ListaMunicipios { 
+        get {
+            if (RegistroFiscal != null) {
+                return Ubicaciones.Estados.Where((e) => e.Nombre.Equals(RegistroFiscal.Estado, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                return [];
+            }
+        }
+    }
+    private bool InfoFiscal = false;
+    */
+}

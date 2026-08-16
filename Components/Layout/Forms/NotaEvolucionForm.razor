@@ -1,0 +1,74 @@
+@rendermode InteractiveServer
+@using friendly_broccoli.Models;
+@using friendly_broccoli.Services;
+@using friendly_broccoli.Data;
+@using Microsoft.EntityFrameworkCore;
+@inject IDbContextFactory<NeuroContext> DbFactory;
+
+@if (Evolucion == null)
+{
+    <p>Preparando nota...</p>
+}
+else
+{
+    <EditForm Model=@Evolucion FormName="Evolucion" OnValidSubmit="HandleValidSubmit">
+        <label for="cuadro-clinico">Cuadro clínico:</label>
+        <InputTextArea @bind-Value="Evolucion.CuadroClinico" id="cuadro-clinico" />
+        <label for="signos-vitales">Signos vitales:</label>
+        <InputTextArea @bind-Value="Evolucion.SignosVitales" id="signos-vitales" />
+        <label for="resultados">Resultados de estudios:</label>
+        <InputTextArea @bind-Value="Evolucion.ResultadosEstudios" id="resultados" />
+        <label for="diagnosticos">Diagnósticos:</label>
+        <InputTextArea @bind-Value="Evolucion.Diagnosticos" id="diagnosticos" />
+        <label for="problemas-clinicos">Problemas clínicos:</label>
+        <InputTextArea @bind-Value="Evolucion.ProblemasClinicos" id="problemas-clinicos" />
+        <label for="pronostico">Pronóstico:</label>
+        <InputTextArea @bind-Value="Evolucion.Pronostico" id="pronostico" />
+        <label for="subjetivo">Subjetivo:</label>
+        <InputTextArea @bind-Value="Evolucion.Subjetivo" id="subjetivo" />
+        <label for="objetivo">Objetivo:</label>
+        <InputTextArea @bind-Value="Evolucion.Objetivo" id="objetivo" />
+        <label for="analisis">Análisis:</label>
+        <InputTextArea @bind-Value="Evolucion.Analisis" id="analisis" />
+        <label for="tratamiento">Plan de tratamiento:</label>
+        <InputTextArea @bind-Value="Evolucion.PlanTratamiento" id="tratamiento" />
+        
+        <ValidationSummary />
+        <button type="submit" disabled=@isSubmitting>Generar</button>
+        <DataAnnotationsValidator />
+    </EditForm>
+}
+
+@code
+{
+    [Parameter]
+    public Guid PacienteIdParam { get; set; }
+    [Parameter]
+    public Guid MedicoIdParam { get; set; }
+    private Evoluciones? Evolucion { get; set; }
+    private CreationServices? Service { get; set; }
+    private bool isSubmitting = false;
+    protected override void OnInitialized()
+    {
+        Evolucion ??= new ()
+        {
+            Id = Guid.CreateVersion7(),
+            PacienteId = PacienteIdParam,
+            MedicoId = MedicoIdParam,
+            Create_At = DateTime.Now
+        };
+        Service ??= new(DbFactory);
+    }
+    private async Task HandleValidSubmit() 
+    {
+        try
+        {
+            isSubmitting = true;
+            bool success = await Service!.CrearEvolucion(Evolucion!);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

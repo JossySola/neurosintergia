@@ -1,0 +1,95 @@
+@rendermode InteractiveServer
+@using friendly_broccoli.Models;
+@using friendly_broccoli.Services;
+@using friendly_broccoli.Data;
+@using Microsoft.EntityFrameworkCore;
+@inject IDbContextFactory<NeuroContext> DbFactory;
+
+@if (RegistroMedico == null)
+{
+    <p>Preparando registro...</p>
+}
+else
+{
+    <EditForm Model=@RegistroMedico FormName="RegistroMedico" OnValidSubmit="HandleValidSubmit">
+        <label for="nombre">Nombre</label>
+        <InputText @bind-Value="RegistroMedico.Nombre" id="nombre" autocomplete="given-name" required />
+        <label for="apellido-paterno">Apellido paterno:</label>
+        <InputText @bind-Value="RegistroMedico.ApellidoPaterno" id="apellido-paterno" autocomplete="family-name" required />
+        <label for="apellido-materno">Apellido materno:</label>
+        <InputText @bind-Value="RegistroMedico.ApellidoMaterno" id="apellido-materno" autocomplete="family-name" required />
+        <label for="fecha-nacimiento">Fecha de nacimiento:</label>
+        <InputDate @bind-Value="RegistroMedico.FechaNacimiento" id="fecha-nacimiento" required />
+        <label for="telefono">Teléfono:</label>
+        <InputText @bind-Value="RegistroMedico.Telefono" id="telefono" autocomplete="tel-national" />
+        <label for="telefono-urgencia">Teléfono urgencias:</label>
+        <InputText @bind-Value="RegistroMedico.TelefonoUrgencias" id="telefono-urgencias" />
+        <label for="email">Correo electrónico:</label>
+        <InputText @bind-Value="RegistroMedico.Email" id="email" autocomplete="email" required />
+        <label for="ced-prof">Cédula profesional:</label>
+        <InputText @bind-Value="RegistroMedico.CedProf" id="ced-prof" min="7" max="8" required />
+        <label for="ced-esp">Cédula de especialidad:</label>
+        <InputText @bind-Value="RegistroMedico.CedEsp" id="ced-esp" min="7" max="8" />
+            <label for="ssa">S.S.A.:</label>
+        <InputText @bind-Value="RegistroMedico.SSA" id="ssa" />
+        <label for="titulo">Título profesional:</label>
+        <InputText @bind-Value="RegistroMedico.Titulo" id="titulo" required />
+        <label for="instituto">Instituto:</label>
+        <InputText @bind-Value="RegistroMedico.Instituto" id="instituto" required />
+        
+        <ValidationSummary />
+        <button type="submit" disabled=@isSubmitting>Registrarse</button>
+        <DataAnnotationsValidator />
+    </EditForm>
+}
+
+@code
+{
+    private Medicos? RegistroMedico { get; set; }
+    private CreationServices? Service { get; set; }
+    private bool isSubmitting = false;
+    protected override void OnInitialized()
+    {
+        RegistroMedico ??= new Medicos 
+        {
+            Create_At = DateTime.Now,
+            Id = Guid.CreateVersion7(),
+            Nombre = "",
+            ApellidoPaterno = "",
+            FechaNacimiento = new DateOnly(),
+            Telefono = "0000000000",
+            Email = "",
+            CedProf = "0000000",
+            SSA = "0000/0000",
+            Titulo = "",
+            Instituto = "",
+            Contrasena = ""
+        };
+        Service ??= new(DbFactory);
+    }
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+            bool success = await Service!.CrearMedico(RegistroMedico!);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+    /*
+    private IEnumerable<Estado> ListaMunicipios { 
+        get {
+            if (RegistroMedico != null) {
+                return Ubicaciones.Estados.Where((e) => e.Nombre.Equals(RegistroMedico.Estado, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                return [];
+            }
+        }
+    }
+    */
+}

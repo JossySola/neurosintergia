@@ -1,0 +1,97 @@
+@rendermode InteractiveServer
+@using friendly_broccoli.Models;
+@using friendly_broccoli.Services;
+@using friendly_broccoli.Data;
+@using Microsoft.EntityFrameworkCore;
+@inject IDbContextFactory<NeuroContext> DbFactory;
+
+@if (Exploracion == null) 
+{
+    <p>Preparando formato...</p>
+}
+else
+{
+    <EditForm Model=@Exploracion FormName="Exploracion" OnValidSubmit="HandleValidSubmit">
+        <div>
+            <h3>Exploración física</h3>
+            <label for="habitus">Habitus Exterior:</label>
+            <InputTextArea @bind-Value="Exploracion.HabitusExt" id="habitus" />
+            <label for="temperatura">Temperatura:</label>
+            <InputNumber @bind-Value="Exploracion.Temperatura" id="temperatura" />
+            <label for="tension">Tensión arterial:</label>
+            <InputNumber @bind-Value="Exploracion.TensionArterial" id="tension" />
+            <label for="cardiaca">Frecuencia cardiaca:</label>
+            <InputNumber @bind-Value="Exploracion.FrecuenciaCardiaca" id="cardiaca" />
+            <label for="respiratoria">Frecuencia respiratoria:</label>
+            <InputNumber @bind-Value="Exploracion.FrecuenciaRespiratoria" id="respiratoria" />
+            <label for="peso">Peso:</label>
+            <InputNumber @bind-Value="Exploracion.Peso" id="peso" />
+            <label for="talla">Talla:</label>
+            <InputNumber @bind-Value="Exploracion.Talla" id="talla" />
+        </div>
+        <div>
+            <h3>Exploración mental</h3>
+            <label for="aspecto">Aspecto:</label>
+            <InputText @bind-Value="Exploracion.Aspecto" id="aspecto" />
+            <label for="apariencia">Apariencia:</label>
+            <InputText @bind-Value="Exploracion.Apariencia" id="apariencia" />
+            <label for="conducta">Conducta:</label>
+            <InputText @bind-Value="Exploracion.Conducta" id="conducta" />
+            <label for="conciencia">Conciencia:</label>
+            <InputText @bind-Value="Exploracion.Conciencia" id="conciencia" />
+            <label for="orientacion">Orientación:</label>
+            <InputText @bind-Value="Exploracion.Orientacion" id="orientacion" />
+            <label for="atencion">Atención:</label>
+            <InputText @bind-Value="Exploracion.Atencion" id="atencion" />
+            <label for="memoria">Memoria:</label>
+            <InputText @bind-Value="Exploracion.Memoria" id="memoria" />
+            <label for="lenguaje">Lenguaje:</label>
+            <InputText @bind-Value="Exploracion.Lenguaje" id="lenguaje" />
+            <label for="pensamiento">Pensamiento:</label>
+            <InputText @bind-Value="Exploracion.Pensamiento" id="pensamiento" />
+            <label for="juicio">Juicio:</label>
+            <InputText @bind-Value="Exploracion.Juicio" id="juicio" />
+            <label for="afecto">Afecto:</label>
+            <InputText @bind-Value="Exploracion.Afecto" id="afecto" />
+            <label for="autoconocimiento">Autoconocimiento:</label>
+            <InputText @bind-Value="Exploracion.Autoconocimiento" id="autoconocimiento" />
+        </div>
+
+        <ValidationSummary />
+        <button type="submit" disabled=@isSubmitting>Generar</button>
+        <DataAnnotationsValidator />
+    </EditForm>
+}
+
+@code
+{
+    [Parameter]
+    public Guid PacienteIdParam { get; set; }
+    [Parameter]
+    public Guid MedicoIdParam { get; set; }
+    private Exploraciones? Exploracion { get; set; }
+    private CreationServices? Service { get; set; }
+    private bool isSubmitting = false;
+    protected override void OnInitialized()
+    {
+        Exploracion ??= new Exploraciones { 
+            Id = Guid.CreateVersion7(),
+            Create_At = DateTime.Now,
+            MedicoId = MedicoIdParam,
+            PacienteId = PacienteIdParam
+        };
+        Service ??= new(DbFactory);
+    }
+    private async Task HandleValidSubmit() 
+    {
+        try
+        {
+            isSubmitting = true;
+            bool success = await Service!.CrearExploracion(Exploracion!);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
