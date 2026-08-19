@@ -1,134 +1,137 @@
-using friendly_broccoli.Data;
-using friendly_broccoli.Models;
+using neurosintergia.Data;
+using neurosintergia.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
-namespace friendly_broccoli.Services;
+namespace neurosintergia.Services;
 
-public class CreationServices(IDbContextFactory<NeuroContext> contextFactory)
+public class CreationServices(
+    IDbContextFactory<ApplicationDbContext> contextFactory,
+    UserManager<ApplicationUser> userManager)
 {
-    private readonly IDbContextFactory<NeuroContext> _contextFactory = contextFactory;
+    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory = contextFactory;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
+
     public async Task<bool> CrearMedico(Medicos model)
     {
-        using var context = _contextFactory.CreateDbContext();
-        Global GlobalInstance = new()
+        var user = await CreateUserAsync(model.Email, "Medico");
+        if (user is null)
         {
-            Email = model.Email,
-            Role = "Medico",
-            Id = model.Id,
-        };
+            return false;
+        }
+
+        model.Id = user.Id;
+        using var context = _contextFactory.CreateDbContext();
         try
         {
             await context.AddAsync(model);
-            await context.AddAsync(GlobalInstance);
             await context.SaveChangesAsync();
             return true;
         }
-        catch (System.Exception)
+        catch
         {
-            
+            await _userManager.DeleteAsync(user);
             throw;
         }
     }
+
     public async Task<bool> CrearPaciente(Pacientes model)
     {
-        using var context = _contextFactory.CreateDbContext();
-        Global GlobalInstance = new()
+        ApplicationUser? user = null;
+        if (!string.IsNullOrWhiteSpace(model.Email))
         {
-            Email = model.Email ?? "",
-            Role = "Paciente",
-            Id = model.Id,
-        };
+            user = await CreateUserAsync(model.Email, "Paciente");
+            if (user is null)
+            {
+                return false;
+            }
+
+            model.Id = user.Id;
+        }
+
+        using var context = _contextFactory.CreateDbContext();
         try
         {
             await context.AddAsync(model);
-            await context.AddAsync(GlobalInstance);
             await context.SaveChangesAsync();
             return true;
         }
-        catch (System.Exception)
+        catch
         {
+            if (user is not null)
+            {
+                await _userManager.DeleteAsync(user);
+            }
+
             throw;
         }
     }
+
     public async Task<bool> CrearReceta(Recetas model)
     {
         using var context = _contextFactory.CreateDbContext();
-        try
-        {
-            await context.AddAsync(model);
-            await context.SaveChangesAsync();
-            return true;
-        }
-        catch (System.Exception)
-        {
-            
-            throw;
-        }
+        await context.AddAsync(model);
+        await context.SaveChangesAsync();
+        return true;
     }
+
     public async Task<bool> CrearEvolucion(Evoluciones model)
     {
         using var context = _contextFactory.CreateDbContext();
-        try
-        {
-            await context.AddAsync(model);
-            await context.SaveChangesAsync();
-            return true;
-        }
-        catch (System.Exception)
-        {
-            
-            throw;
-        }
+        await context.AddAsync(model);
+        await context.SaveChangesAsync();
+        return true;
     }
+
     public async Task<bool> CrearInterrogatorio(InterrogatoriosIniciales model)
     {
         using var context = _contextFactory.CreateDbContext();
-        try
-        {
-            await context.AddAsync(model);
-            await context.SaveChangesAsync();
-            return true;
-        }
-        catch (System.Exception)
-        {
-            
-            throw;
-        }
+        await context.AddAsync(model);
+        await context.SaveChangesAsync();
+        return true;
     }
+
     public async Task<bool> CrearExploracion(Exploraciones model)
     {
         using var context = _contextFactory.CreateDbContext();
+        await context.AddAsync(model);
+        await context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> CrearAdmin(Admins model)
+    {
+        var user = new ApplicationUser
+        {
+            Email = model.Email,
+            UserName = model.Email,
+            Role = "Admin"
+        };
+
+        model.Id = user.Id;
+        using var context = _contextFactory.CreateDbContext();
         try
         {
             await context.AddAsync(model);
             await context.SaveChangesAsync();
             return true;
         }
-        catch (System.Exception)
+        catch
         {
-            
+            await _userManager.DeleteAsync(user);
             throw;
         }
     }
-    public async Task<bool> CrearAdmin(Admins model)
+
+    private async Task<ApplicationUser?> CreateUserAsync(string email, string role)
     {
-        using var context = _contextFactory.CreateDbContext();
-        Global GlobalInstance = new()
+        var user = new ApplicationUser
         {
-            Email = model.Email,
-            Role = "Admin",
-            Id = model.Id,
+            Email = email,
+            UserName = email,
+            Role = role
         };
-        try
-        {
-            await context.AddAsync(model);
-            await context.AddAsync(GlobalInstance);
-            await context.SaveChangesAsync();
-            return true;
-        }
-        catch (System.Exception)
-        {
-            throw;
-        }
+        var result = await _userManager.CreateAsync(user);
+        return result.Succeeded ? user : null;
     }
 }
