@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
 namespace neurosintergia.Data.Models;
-public record Otros(Guid Id, string Opcion, bool Valor);
+public record Otros(string Opcion, bool Valor);
 public class InterrogatoriosIniciales
 {
     [Required]
