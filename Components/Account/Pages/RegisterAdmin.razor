@@ -1,0 +1,85 @@
+@page "/NewAdmin"
+@rendermode InteractiveServer
+
+@using neurosintergia.Services;
+@using neurosintergia.Data.Models;
+
+@inject CreationServices ServiceInstance;
+
+<PageTitle>Register Admin</PageTitle>
+
+@if (AdminModel == null)
+{
+    <p>Preparando nuevo registro...</p>
+}
+else
+{
+    <EditForm Model="AdminModel" OnValidSubmit="HandleSubmit" FormName="RegisterAdmin">
+        <DataAnnotationsValidator />
+        <label for="nombre">Nombre:</label>
+        <InputText @bind-Value="AdminModel.Nombre" id="nombre" min=3 autocomplete="name"  required/>
+
+        <label for="apellido-paterno">Apellido paterno:</label>
+        <InputText @bind-Value="AdminModel.ApellidoPaterno" id="apellido-paterno" min=3 autocomplete="family-name" required />
+
+        <label for="apellido-materno">Apellido materno:</label>
+        <InputText @bind-Value="AdminModel.ApellidoMaterno" id="apellido-materno" />
+
+        <label for="curp">CURP:</label>
+        <InputText @bind-Value="AdminModel.CURP" id="curp" min=18 max=18 required />
+
+        <label for="fecha-nacimiento">Fecha de nacimiento:</label>
+        <InputDate @bind-Value="AdminModel.FechaNacimiento" id="fecha-nacimiento" autocomplete="bday" required />
+
+        <label for="calle">Calle:</label>
+        <InputText @bind-Value="AdminModel.Calle" id="calle" required />
+
+        <label for="num-ext">Número exterior:</label>
+        <InputText @bind-Value="AdminModel.NumExt" id="num-ext" required />
+
+        <label for="num-int">Número interior:</label>
+        <InputText @bind-Value="AdminModel.NumInt" id="num-int" />
+
+        <label for="colonia">Colonia:</label>
+        <InputText @bind-Value="AdminModel.Colonia" id="colonia" required />
+
+        <label for="codigo-postal">Código postal:</label>
+        <InputText @bind-Value="AdminModel.CodigoPostal" id="codigo-postal" required />
+
+        <label for="telefono">Teléfono:</label>
+        <InputText @bind-Value="AdminModel.Telefono" id="telefono" autocomplete="tel-national" required />
+
+        <label for="email">Correo electrónico:</label>
+        <InputText @bind-Value="AdminModel.Email" id="email" autocomplete="email" required />
+
+        <button type="submit">Registrarse</button>
+
+        <ValidationSummary role="alert" />
+    </EditForm>
+}
+
+@code 
+{
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        AdminModel ??= new()
+        {
+            Created_At = DateTime.Now,
+            Nombre = "",
+            ApellidoPaterno = "",
+            CURP = "",
+            Calle = "",
+            NumExt = "",
+            Colonia = "",
+            Email = "",
+            CodigoPostal = "",
+            Telefono = ""
+        };
+    }
+    private Admins? AdminModel;
+
+    protected async void HandleSubmit () {
+        await ServiceInstance.CrearAdmin(AdminModel!);
+    }
+}
