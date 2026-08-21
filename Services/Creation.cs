@@ -2,136 +2,51 @@ using neurosintergia.Data;
 using neurosintergia.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using neurosintergia.Components.Account.Pages;
 
 namespace neurosintergia.Services;
 
 public class CreationServices(
     IDbContextFactory<ApplicationDbContext> contextFactory,
-    UserManager<ApplicationUser> userManager)
+    UserManager<ApplicationUser> userManager,
+    ILogger<Register> logger)
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory = contextFactory;
-    private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IDbContextFactory<ApplicationDbContext> ContextFactory = contextFactory;
+    private readonly UserManager<ApplicationUser> UserManager = userManager;
 
-    public async Task<bool> CrearMedico(Medicos model)
+    public async Task<IdentityResult> CrearAdmin(Admins model)
     {
-        var user = await CreateUserAsync(model.Email, "Medico");
-        if (user is null)
+        using var context = ContextFactory.CreateDbContext();
+
+        var user = new ApplicationUser();
+        await UserManager.SetUserNameAsync(user, model.Email);
+        await UserManager.SetEmailAsync(user, model.Email);
+
+        var result = await UserManager.CreateAsync(user);
+        if (!result.Succeeded)
         {
-            return false;
+            return result;
         }
 
-        model.Id = user.Id;
-        using var context = _contextFactory.CreateDbContext();
+        var roleResult = await UserManager.AddToRoleAsync(user, "Admin");
+        if (!roleResult.Succeeded)
+        {
+            await UserManager.DeleteAsync(user);
+            return roleResult;
+        }
+
         try
         {
+            model.Id = await UserManager.GetUserIdAsync(user);
             await context.AddAsync(model);
             await context.SaveChangesAsync();
-            return true;
+
+            return IdentityResult.Success;
         }
         catch
         {
-            await _userManager.DeleteAsync(user);
+            await UserManager.DeleteAsync(user);
             throw;
         }
-    }
-
-    public async Task<bool> CrearPaciente(Pacientes model)
-    {
-        ApplicationUser? user = null;
-        if (!string.IsNullOrWhiteSpace(model.Email))
-        {
-            user = await CreateUserAsync(model.Email, "Paciente");
-            if (user is null)
-            {
-                return false;
-            }
-
-            model.Id = user.Id;
-        }
-
-        using var context = _contextFactory.CreateDbContext();
-        try
-        {
-            await context.AddAsync(model);
-            await context.SaveChangesAsync();
-            return true;
-        }
-        catch
-        {
-            if (user is not null)
-            {
-                await _userManager.DeleteAsync(user);
-            }
-
-            throw;
-        }
-    }
-
-    public async Task<bool> CrearReceta(Recetas model)
-    {
-        using var context = _contextFactory.CreateDbContext();
-        await context.AddAsync(model);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> CrearEvolucion(Evoluciones model)
-    {
-        using var context = _contextFactory.CreateDbContext();
-        await context.AddAsync(model);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> CrearInterrogatorio(InterrogatoriosIniciales model)
-    {
-        using var context = _contextFactory.CreateDbContext();
-        await context.AddAsync(model);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> CrearExploracion(Exploraciones model)
-    {
-        using var context = _contextFactory.CreateDbContext();
-        await context.AddAsync(model);
-        await context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> CrearAdmin(Admins model)
-    {
-        var user = new ApplicationUser
-        {
-            Email = model.Email,
-            UserName = model.Email,
-            Role = "Admin"
-        };
-
-        model.Id = user.Id;
-        using var context = _contextFactory.CreateDbContext();
-        try
-        {
-            await context.AddAsync(model);
-            await context.SaveChangesAsync();
-            return true;
-        }
-        catch
-        {
-            await _userManager.DeleteAsync(user);
-            throw;
-        }
-    }
-
-    private async Task<ApplicationUser?> CreateUserAsync(string email, string role)
-    {
-        var user = new ApplicationUser
-        {
-            Email = email,
-            UserName = email,
-            Role = role
-        };
-        var result = await _userManager.CreateAsync(user);
-        return result.Succeeded ? user : null;
     }
 }
