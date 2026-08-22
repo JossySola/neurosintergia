@@ -2,14 +2,12 @@ using neurosintergia.Data;
 using neurosintergia.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using neurosintergia.Components.Account.Pages;
 
 namespace neurosintergia.Services;
 
 public class CreationServices(
     IDbContextFactory<ApplicationDbContext> contextFactory,
-    UserManager<ApplicationUser> userManager,
-    ILogger<Register> logger)
+    UserManager<ApplicationUser> userManager)
 {
     private readonly IDbContextFactory<ApplicationDbContext> ContextFactory = contextFactory;
     private readonly UserManager<ApplicationUser> UserManager = userManager;
