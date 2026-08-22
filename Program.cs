@@ -5,6 +5,7 @@ using neurosintergia.Components;
 using neurosintergia.Components.Account;
 using neurosintergia.Data;
 using neurosintergia.Services;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,13 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddOptions();
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>(o =>
+{
+    o.ApiToken = Environment.GetEnvironmentVariable("ResendKey")!;
+});
+builder.Services.AddTransient<IResend, ResendClient>();
 
 var app = builder.Build();
 
