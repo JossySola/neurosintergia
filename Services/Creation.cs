@@ -12,11 +12,10 @@ public class CreationServices(
     private readonly IDbContextFactory<ApplicationDbContext> ContextFactory = contextFactory;
     private readonly UserManager<ApplicationUser> UserManager = userManager;
 
-    public async Task<IdentityResult> CrearAdmin(Admins model)
+    public async Task<IdentityResult> CrearAdmin(Admins model, ApplicationUser user)
     {
         using var context = ContextFactory.CreateDbContext();
-
-        var user = new ApplicationUser();
+        
         await UserManager.SetUserNameAsync(user, model.Email);
         await UserManager.SetEmailAsync(user, model.Email);
 
@@ -35,7 +34,8 @@ public class CreationServices(
 
         try
         {
-            model.Id = await UserManager.GetUserIdAsync(user);
+            var userId = await UserManager.GetUserIdAsync(user);
+            model.Id = userId;
             await context.AddAsync(model);
             await context.SaveChangesAsync();
 
