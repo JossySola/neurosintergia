@@ -1,16 +1,27 @@
 @page "/NewAdmin"
 @rendermode InteractiveServer
 
-@using neurosintergia.Services;
-@using neurosintergia.Data.Models;
+@using System.Text
+@using neurosintergia.Services
+@using neurosintergia.Data
+@using neurosintergia.Data.Models
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.AspNetCore.Identity
 
-@inject CreationServices ServiceInstance;
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@inject CreationServices ServiceInstance
+@inject EmailSender EmailSender
 
 <PageTitle>Register Admin</PageTitle>
 
 @if (AdminModel == null)
 {
     <p>Preparando nuevo registro...</p>
+}
+else if (isEmailSent)
+{
+    <p>Se ha enviado un enlace de confirmación a tu correo electrónico, por favor confirma tu correo electrónico por medio de ese enlace.</p>
 }
 else
 {
@@ -52,7 +63,7 @@ else
         <label for="email">Correo electrónico:</label>
         <InputText @bind-Value="AdminModel.Email" id="email" autocomplete="email" required />
 
-        <button type="submit">Registrarse</button>
+        <button type="submit" disabled=@isSubmitting>Registrarse</button>
 
         <ValidationSummary role="alert" />
     </EditForm>
@@ -60,6 +71,15 @@ else
 
 @code 
 {
+    private Admins? AdminModel;
+
+    private bool isSubmitting = false;
+
+    private bool isEmailSent = false;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -77,9 +97,33 @@ else
             Telefono = ""
         };
     }
-    private Admins? AdminModel;
 
-    protected async void HandleSubmit () {
-        await ServiceInstance.CrearAdmin(AdminModel!);
+    protected async Task HandleSubmit () {
+        try
+        {
+            isSubmitting = true;
+            ApplicationUser user = new();
+            var result = await ServiceInstance.CrearAdmin(AdminModel!, user);
+            if (result is not null) 
+            {
+                var userId = await UserManager.GetUserIdAsync(user);
+                var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                    NavigationManager.ToAbsoluteUri("EnableAuthenticator").AbsoluteUri,
+                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl}
+                );
+                var emailSent = await EmailSender.ExecuteConfirmation(AdminModel!.Email, callbackUrl);
+                if (emailSent.Success) 
+                {
+                    isEmailSent = true;
+                }
+            }
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+
     }
 }
