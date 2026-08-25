@@ -48,9 +48,11 @@ builder.Services.AddOptions();
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o =>
 {
-    o.ApiToken = Environment.GetEnvironmentVariable("ResendKey")!;
+    o.ApiToken = builder.Configuration["ResendKey"]
+        ?? throw new InvalidOperationException("Configuration value 'ResendKey' is missing.");
 });
 builder.Services.AddTransient<IResend, ResendClient>();
+builder.Services.AddTransient<EmailSender>();
 
 var app = builder.Build();
 
