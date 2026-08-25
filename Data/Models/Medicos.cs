@@ -32,5 +32,7 @@ public class Medicos
     public required string Titulo { get; set; }
     [Required(ErrorMessage = "El nombre del instituto es requerido")]
     public required string Instituto { get; set; }
-    
+    public string Status { get; set; } = "Pending";
+    public string ReviewedByUserId { get; set; } = "";
+    public string? RejectionReason { get; set; }
 }
