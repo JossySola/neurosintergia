@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("neurosintergia")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6eb27d931a3bc50697f3fd5671324b07df83eb25")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4be5945cc1ee29dc6dc412229d52a0a2f63fa370")]
 [assembly: System.Reflection.AssemblyProductAttribute("neurosintergia")]
 [assembly: System.Reflection.AssemblyTitleAttribute("neurosintergia")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
