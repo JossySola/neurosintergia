@@ -5,7 +5,9 @@ public class Admins
 {
     [Required]
     public DateTime Created_At { get; set; }
-    public string? Id { get; set; }
+    [Key]
+    public required string Id { get; set; }
+    public ApplicationUser User { get; set; } = default!;
     [Required(ErrorMessage = "El nombre es requerido")] 
     [MinLength(3, ErrorMessage = "El nombre debe tener un mínimo de 3 caracteres")]
     public required string Nombre { get; set; }

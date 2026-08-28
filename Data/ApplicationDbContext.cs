@@ -18,6 +18,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Entity<Admins>()
+        .HasOne(a => a.User)
+        .WithOne()
+        .HasForeignKey<Admins>(a => a.Id)
+        .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Medicos>()
+            .HasOne(m => m.User)
+            .WithOne()
+            .HasForeignKey<Medicos>(m => m.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Pacientes>()
+            .HasOne(p => p.User)
+            .WithOne()
+            .HasForeignKey<Pacientes>(p => p.Id)
+            .OnDelete(DeleteBehavior.Cascade);
         var otrosComparer = new ValueComparer<List<Otros>>(
             (a, b) => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
                 == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null),
