@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using neurosintergia.Services;
 
 namespace neurosintergia.Data.Models;
-public class Admins
+public class Admins: IUserProfile
 {
     [Required]
     public DateTime Created_At { get; set; }

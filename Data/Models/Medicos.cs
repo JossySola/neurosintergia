@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using neurosintergia.Services;
 
 namespace neurosintergia.Data.Models;
-public class Medicos
+public class Medicos : IUserProfile
 {
     [Required(ErrorMessage = "La fecha de creación es requerida")]
     public required DateTime Create_At { get; set; }
