@@ -16,7 +16,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-builder.Services.AddScoped<CreationServices>();
+builder.Services.AddScoped<AuthFlowService>();
 
 builder.Services.AddAuthentication(options =>
     {
