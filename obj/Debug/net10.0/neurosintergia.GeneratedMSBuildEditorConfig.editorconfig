@@ -35,16 +35,16 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBY2NvdW50XFBhZ2VzXEFjY2Vzc0RlbmllZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/projects/neurosintergia/Components/Account/Pages/CompleteSignUp.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBY2NvdW50XFBhZ2VzXENvbXBsZXRlU2lnblVwLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/projects/neurosintergia/Components/Account/Pages/ConfirmEmail.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBY2NvdW50XFBhZ2VzXENvbmZpcm1FbWFpbC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/projects/neurosintergia/Components/Account/Pages/ConfirmEmailChange.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBY2NvdW50XFBhZ2VzXENvbmZpcm1FbWFpbENoYW5nZS5yYXpvcg==
-build_metadata.AdditionalFiles.CssScope = 
-
-[D:/projects/neurosintergia/Components/Account/Pages/EnableAuthenticator.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBY2NvdW50XFBhZ2VzXEVuYWJsZUF1dGhlbnRpY2F0b3IucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/projects/neurosintergia/Components/Account/Pages/ExternalLogin.razor]
@@ -237,6 +237,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/projects/neurosintergia/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/projects/neurosintergia/Components/Pages/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEYXNoYm9hcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/projects/neurosintergia/Components/Pages/Error.razor]

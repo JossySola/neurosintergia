@@ -251,6 +251,6 @@ D:\projects\neurosintergia\bin\Debug\net10.0\runtimes\win-x64\native\msalruntime
 D:\projects\neurosintergia\bin\Debug\net10.0\runtimes\win-x86\native\msalruntime_x86.dll
 D:\projects\neurosintergia\bin\Debug\net10.0\Resend.dll
 D:\projects\neurosintergia\bin\Debug\net10.0\QrCodeGenerator.dll
-D:\projects\neurosintergia\bin\Debug\net10.0\neurosintergia.pdb
 D:\projects\neurosintergia\obj\Debug\net10.0\neurosintergia.sourcelink.json
+D:\projects\neurosintergia\bin\Debug\net10.0\neurosintergia.pdb
 D:\projects\neurosintergia\obj\Debug\net10.0\neurosintergia.pdb
