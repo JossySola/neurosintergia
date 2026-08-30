@@ -1,3 +1,4 @@
+<!--
 @rendermode InteractiveServer
 @using friendly_broccoli.Models;
 @using friendly_broccoli.Data.Static;
@@ -10,11 +11,12 @@
 {
     <p>Preparando nueva receta...</p>
 }
+-->
+<!--
 else 
 {
     <EditForm Model=@NuevaReceta FormName="NuevaReceta" OnValidSubmit="HandleValidSubmit">
         <div class="">
-            <!-- MEDICAMENTO -->
             <label for="medicamento">Medicamento:</label>
             <InputSelect @bind-Value="NuevaReceta.Medicamento" @bind-Value:after="OnMedicamentoChange" id="medicamento" required>
                 <option value="">Selecciona un medicamento</option>
@@ -25,8 +27,7 @@ else
                     </option>
                 }
             </InputSelect>
-
-            <!-- DOSIS -->
+            
             <label for="dosis">Dosis:</label>
             <InputSelect @bind-Value="NuevaReceta.Dosis" @bind-Value:after="OnDosisChange" id="dosis" disabled="@(string.IsNullOrEmpty(NuevaReceta.Medicamento))" required>
                 <option value="">Selecciona la dosis</option>
@@ -35,8 +36,7 @@ else
                     <option value="@Dosis">@Dosis</option>
                 }
             </InputSelect>
-
-            <!-- PRESENTACIONES -->
+            
             <label for="presentacion">Presentación:</label>
             <InputSelect @bind-Value="NuevaReceta.Presentacion" id="presentacion" disabled="@(string.IsNullOrEmpty(NuevaReceta.Dosis))" required>
                 <option value="">Selecciona la presentación</option>
@@ -47,7 +47,7 @@ else
             </InputSelect>
         </div>
         <div>
-            <!-- FRECUENCIA DE ADMINISTRACIÓN -->
+        
             <label for="cantidad">Administrar</label>
             <InputNumber @bind-Value="NuevaReceta.Cantidad" min="1" id="cantidad" required />
             <p>@UnidadMedidaText</p>
@@ -73,7 +73,8 @@ else
         <DataAnnotationsValidator />
     </EditForm>
 }
-
+-->
+<!--
 @code {
     [Parameter]
     public Guid PacienteIdParam { get; set; }
@@ -179,3 +180,4 @@ else
         }
     }
 }
+-->
