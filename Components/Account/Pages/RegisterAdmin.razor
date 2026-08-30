@@ -126,7 +126,7 @@ else
                 Email = AdminModel.Email
             };
 
-            var result = await ServiceInstance.SignUp(admin, admin.Email, "SuperAdmin", user);
+            var result = await ServiceInstance.SignUp(admin, admin.Email, "Admin", user);
             if (!result.Succeeded)
             {
                 identityErrors = result.Errors;
