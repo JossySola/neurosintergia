@@ -70,8 +70,8 @@ public class AuthFlowService(
         await UserManager.SetTwoFactorEnabledAsync(user, true);
         return true;
     }
-    public async Task SetPassword(string password, ApplicationUser user)
+    public async Task<IdentityResult> SetPassword(string password, ApplicationUser user)
     {
-        await UserManager.AddPasswordAsync(user, password);
+        return await UserManager.AddPasswordAsync(user, password);
     }
 }
