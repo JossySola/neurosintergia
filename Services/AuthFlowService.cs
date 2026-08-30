@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using neurosintergia.Data;
+using System.Security.Cryptography;
 
 namespace neurosintergia.Services;
 
@@ -13,7 +14,8 @@ public interface IUserProfile
 }
 public class AuthFlowService(
     UserManager<ApplicationUser> userManager,
-    IDbContextFactory<ApplicationDbContext> contextFactory
+    IDbContextFactory<ApplicationDbContext> contextFactory,
+    HttpClient httpClient
 )
 {
     private readonly UserManager<ApplicationUser> UserManager = userManager;
@@ -72,6 +74,51 @@ public class AuthFlowService(
     }
     public async Task<IdentityResult> SetPassword(string password, ApplicationUser user)
     {
+        if (await IsPwnedAsync(password))
+        {
+            return IdentityResult.Failed(new IdentityError
+            {
+               Description = "Esta contraseña ha aparecido en filtraciones de datos. Te sugerimos utilizar tu Administrador de Contraseñas para obtener una contraseña segura y con caracteres aleatorios." 
+            });
+        }
         return await UserManager.AddPasswordAsync(user, password);
+    }
+
+    private async Task<int> GetPwnedCountAsync(string password)
+    {
+        var hash = Convert.ToHexString(
+            SHA1.HashData(Encoding.UTF8.GetBytes(password)));
+
+        var prefix = hash[..5];
+        var suffix = hash[5..];
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"https://api.pwnedpasswords.com/range/{prefix}");
+
+        request.Headers.UserAgent.ParseAdd("Neurosintergia");
+
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadAsStringAsync();
+
+        foreach (var line in body.Split('\n'))
+        {
+            var parts = line.Trim().Split(':');
+
+            if (parts.Length == 2 &&
+                parts[0].Equals(suffix, StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(parts[1], out var count))
+            {
+                return count;
+            }
+        }
+
+        return 0;
+    }
+    private async Task<bool> IsPwnedAsync(string password)
+    {
+        return await GetPwnedCountAsync(password) > 0;
     }
 }
