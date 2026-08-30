@@ -1,6 +1,7 @@
 @page "/NewAdmin"
 @rendermode InteractiveServer
 
+@using System.ComponentModel.DataAnnotations
 @using System.Text
 @using neurosintergia.Services
 @using neurosintergia.Data
@@ -10,7 +11,7 @@
 
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
-@inject CreationServices ServiceInstance
+@inject AuthFlowService ServiceInstance
 @inject EmailSender EmailSender
 
 <PageTitle>Register Admin</PageTitle>
@@ -25,8 +26,11 @@ else if (isEmailSent)
 }
 else
 {
+    <StatusMessage Message="@Message" />
     <EditForm Model="AdminModel" OnValidSubmit="HandleSubmit" FormName="RegisterAdmin">
         <DataAnnotationsValidator />
+        <ValidationSummary role="alert" />
+
         <label for="nombre">Nombre:</label>
         <InputText @bind-Value="AdminModel.Nombre" id="nombre" min=3 autocomplete="name"  required/>
 
@@ -64,14 +68,13 @@ else
         <InputText @bind-Value="AdminModel.Email" id="email" autocomplete="email" required />
 
         <button type="submit" disabled=@isSubmitting>Registrarse</button>
-
-        <ValidationSummary role="alert" />
     </EditForm>
 }
 
 @code 
 {
-    private Admins? AdminModel;
+    private AdminInputModel? AdminModel;
+    private IEnumerable<IdentityError>? identityErrors;
 
     private bool isSubmitting = false;
 
@@ -79,6 +82,8 @@ else
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
+
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
     protected override void OnInitialized()
     {
@@ -103,14 +108,38 @@ else
         {
             isSubmitting = true;
             ApplicationUser user = new();
-            var result = await ServiceInstance.CrearAdmin(AdminModel!, user);
-            if (result is not null) 
+            var admin = new Admins
+            {
+                Id = "default",
+                Created_At = AdminModel!.Created_At,
+                Nombre = AdminModel.Nombre,
+                ApellidoPaterno = AdminModel.ApellidoPaterno,
+                ApellidoMaterno = AdminModel.ApellidoMaterno,
+                CURP = AdminModel.CURP,
+                FechaNacimiento = AdminModel.FechaNacimiento,
+                Calle = AdminModel.Calle,
+                NumExt = AdminModel.NumExt,
+                NumInt = AdminModel.NumInt,
+                Colonia = AdminModel.Colonia,
+                CodigoPostal = AdminModel.CodigoPostal,
+                Telefono = AdminModel.Telefono,
+                Email = AdminModel.Email
+            };
+
+            var result = await ServiceInstance.SignUp(admin, admin.Email, "SuperAdmin", user);
+            if (!result.Succeeded)
+            {
+                identityErrors = result.Errors;
+                return;
+            }
+
+            if (result is not null)
             {
                 var userId = await UserManager.GetUserIdAsync(user);
                 var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                 var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                    NavigationManager.ToAbsoluteUri("EnableAuthenticator").AbsoluteUri,
+                    NavigationManager.ToAbsoluteUri("CompleteSignUp").AbsoluteUri,
                     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl}
                 );
                 var emailSent = await EmailSender.ExecuteConfirmation(AdminModel!.Email, callbackUrl);
@@ -125,5 +154,50 @@ else
             isSubmitting = false;
         }
 
+    }
+
+    private sealed class AdminInputModel
+    {
+        [Required(ErrorMessage = "El nombre es requerido")]
+        [MinLength(3, ErrorMessage = "El nombre debe tener un mínimo de 3 caracteres")]
+        public string Nombre { get; set; } = "";
+
+        [Required(ErrorMessage = "El apellido paterno es requerido")]
+        [MinLength(3, ErrorMessage = "El apellido paterno debe tener un mínimo de 3 caracteres")]
+        public string ApellidoPaterno { get; set; } = "";
+
+        public string? ApellidoMaterno { get; set; }
+
+        [Required(ErrorMessage = "El CURP es requerido")]
+        [Length(18, 18, ErrorMessage = "El CURP debe tener 18 dígitos")]
+        public string CURP { get; set; } = "";
+
+        [Required(ErrorMessage = "La fecha de nacimiento es requerida")]
+        public DateOnly FechaNacimiento { get; set; }
+
+        [Required(ErrorMessage = "La calle es requerida")]
+        public string Calle { get; set; } = "";
+
+        [Required(ErrorMessage = "El número exterior es requerido")]
+        public string NumExt { get; set; } = "";
+
+        public string? NumInt { get; set; }
+
+        [Required(ErrorMessage = "La colonia es requerida")]
+        public string Colonia { get; set; } = "";
+
+        [Required(ErrorMessage = "El código postal es requerido")]
+        public string CodigoPostal { get; set; } = "";
+
+        [Required(ErrorMessage = "El teléfono es requerido")]
+        [Phone(ErrorMessage = "Debes de ingresar un número de teléfono válido")]
+        [Length(10, 10, ErrorMessage = "El número de teléfono debe ser de 10 dígitos")]
+        public string Telefono { get; set; } = "";
+
+        [Required(ErrorMessage = "El correo electrónico es requerido")]
+        [EmailAddress(ErrorMessage = "El correo electrónico debe ser válido")]
+        public string Email { get; set; } = "";
+
+        public DateTime Created_At { get; set; }
     }
 }
