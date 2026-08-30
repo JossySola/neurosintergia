@@ -27,7 +27,7 @@ else if (isEmailSent)
 else
 {
     <StatusMessage Message="@Message" />
-    <EditForm Model="AdminModel" OnValidSubmit="HandleSubmit" FormName="RegisterAdmin">
+    <EditForm Model="AdminModel" OnValidSubmit="HandleSubmit" FormName="RegisterAdmin" method="post">
         <DataAnnotationsValidator />
         <ValidationSummary role="alert" />
 
@@ -73,7 +73,8 @@ else
 
 @code 
 {
-    private AdminInputModel? AdminModel;
+    [SupplyParameterFromForm(FormName = "RegisterAdmin")]
+    private AdminInputModel? AdminModel { get; set; }
     private IEnumerable<IdentityError>? identityErrors;
 
     private bool isSubmitting = false;
@@ -90,7 +91,6 @@ else
         base.OnInitialized();
         AdminModel ??= new()
         {
-            Created_At = DateTime.Now,
             Nombre = "",
             ApellidoPaterno = "",
             CURP = "",
@@ -111,8 +111,8 @@ else
             var admin = new Admins
             {
                 Id = "default",
-                Created_At = AdminModel!.Created_At,
-                Nombre = AdminModel.Nombre,
+                Created_At = DateTime.Now,
+                Nombre = AdminModel!.Nombre,
                 ApellidoPaterno = AdminModel.ApellidoPaterno,
                 ApellidoMaterno = AdminModel.ApellidoMaterno,
                 CURP = AdminModel.CURP,
@@ -197,7 +197,5 @@ else
         [Required(ErrorMessage = "El correo electrónico es requerido")]
         [EmailAddress(ErrorMessage = "El correo electrónico debe ser válido")]
         public string Email { get; set; } = "";
-
-        public DateTime Created_At { get; set; }
     }
 }
