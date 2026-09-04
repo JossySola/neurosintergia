@@ -11,6 +11,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Admins> Admins { get; set; } = default!;
     public DbSet<Medicos> Medicos { get; set; } = default!;
     public DbSet<Pacientes> Pacientes { get; set; } = default!;
+    public DbSet<SignUpRequests> SignUpRequests { get; set; } = default!;
     public DbSet<Recetas> Recetas { get; set; } = default!;
     public DbSet<InterrogatoriosIniciales> InterrogatoriosIniciales { get; set; } = default!;
     public DbSet<Evoluciones> Evoluciones { get; set; } = default!;
@@ -18,6 +19,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<SignUpRequests>()
+        .HasOne(a => a.User)
+        .WithOne()
+        .HasForeignKey<SignUpRequests>(a => a.Id)
+        .OnDelete(DeleteBehavior.Cascade);
+
         builder.Entity<Admins>()
         .HasOne(a => a.User)
         .WithOne()
@@ -25,16 +33,17 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Medicos>()
-            .HasOne(m => m.User)
-            .WithOne()
-            .HasForeignKey<Medicos>(m => m.Id)
-            .OnDelete(DeleteBehavior.Cascade);
+        .HasOne(m => m.User)
+        .WithOne()
+        .HasForeignKey<Medicos>(m => m.Id)
+        .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Pacientes>()
-            .HasOne(p => p.User)
-            .WithOne()
-            .HasForeignKey<Pacientes>(p => p.Id)
-            .OnDelete(DeleteBehavior.Cascade);
+        .HasOne(p => p.User)
+        .WithOne()
+        .HasForeignKey<Pacientes>(p => p.Id)
+        .OnDelete(DeleteBehavior.Cascade);
+
         var otrosComparer = new ValueComparer<List<Otros>>(
             (a, b) => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
                 == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null),
