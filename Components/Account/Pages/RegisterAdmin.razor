@@ -32,7 +32,7 @@ else
         <ValidationSummary role="alert" />
 
         <label for="nombre">Nombre:</label>
-        <InputText @bind-Value="AdminModel.Nombre" id="nombre" min=3 autocomplete="name"  required/>
+        <InputText @bind-Value="AdminModel.Nombre" id="nombre" min=3 autocomplete="name"  required />
 
         <label for="apellido-paterno">Apellido paterno:</label>
         <InputText @bind-Value="AdminModel.ApellidoPaterno" id="apellido-paterno" min=3 autocomplete="family-name" required />
@@ -89,18 +89,7 @@ else
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        AdminModel ??= new()
-        {
-            Nombre = "",
-            ApellidoPaterno = "",
-            CURP = "",
-            Calle = "",
-            NumExt = "",
-            Colonia = "",
-            Email = "",
-            CodigoPostal = "",
-            Telefono = ""
-        };
+        AdminModel ??= new();
     }
 
     protected async Task HandleSubmit () {
