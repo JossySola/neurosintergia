@@ -1,13 +1,13 @@
 @page "/Account/NewAdmin"
 @rendermode InteractiveServer
 
-@using System.ComponentModel.DataAnnotations
 @using System.Text
-@using neurosintergia.Services
 @using neurosintergia.Data
+@using neurosintergia.Services
 @using neurosintergia.Data.Models
-@using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using System.ComponentModel.DataAnnotations
 
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
@@ -114,14 +114,12 @@ else
                 Telefono = AdminModel.Telefono,
                 Email = AdminModel.Email
             };
-
             var result = await ServiceInstance.SignUp(admin, admin.Email, "Admin", user);
             if (!result.Succeeded)
             {
                 identityErrors = result.Errors;
                 return;
             }
-
             if (result is not null)
             {
                 var userId = await UserManager.GetUserIdAsync(user);
@@ -142,7 +140,6 @@ else
         {
             isSubmitting = false;
         }
-
     }
 
     private sealed class AdminInputModel
