@@ -3,6 +3,7 @@
 
 @using neurosintergia.Data
 @using neurosintergia.Services
+@using neurosintergia.Data.Static
 @using neurosintergia.Data.Models
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Identity
@@ -45,6 +46,28 @@ else
 
         <label for="curp">CURP:</label>
         <InputText @bind-Value="FormModel.CURP" id="curp" required />
+
+        <label for="estado">Estado de Nacimiento:</label>
+        <InputSelect @bind-Value="FormModel.EstadoNacimiento" id="estado" required>
+            @foreach (var Estado in Ubicaciones.Estados) 
+            {
+                <option value="@Estado.Nombre">@Estado.Nombre</option>
+            }
+        </InputSelect>
+
+        <label for="municipio">Municipio de Nacimiento:</label>
+        <InputSelect @bind-Value="FormModel.MunicipioNacimiento" id="municipio" disabled=(@FormModel.EstadoNacimiento.Length > 0) required>
+            @foreach (var Estado in Ubicaciones.Estados)
+            {
+                if (Estado.Nombre == FormModel.EstadoNacimiento)
+                {
+                    foreach (var Municipio in Estado.Municipios)
+                    {
+                        <option value="@Municipio">@Municipio</option>
+                    }
+                }
+            }
+        </InputSelect>
 
         <label for="telefono">Teléfono:</label>
         <InputText @bind-Value="FormModel.Telefono" id="telefono" required />
