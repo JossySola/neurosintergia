@@ -11,12 +11,23 @@ public class EmailSender(IResend resend)
         var encodedLink = HtmlEncoder.Default.Encode(link);
         var message = new EmailMessage
         {
-            From = "contact@jossysola.com",
+            From = "no-reply@jossysola.com",
             Subject = "Neurosintergia: Confirma tu correo electrónico",
             HtmlBody = $"<p>Confirma tu correo electrónico dando clic en este enlace: <a href=\"{encodedLink}\">confirmar correo electrónico</a>.</p>",
             TextBody = $"Confirm your email by clicking this link: {link}"
         };
         message.To.Add($"{email}");
+        return await _resend.EmailSendAsync(message);
+    }
+    public async Task<ResendResponse> SendPendingSignUpNotification()
+    {
+        var message = new EmailMessage
+        {
+          From = "no-reply@jossysola.com",
+          Subject = "Neurosintergia: Pending sign up approval",
+          HtmlBody = "<p>There is a pending sign up approval</p>"  
+        };
+        message.To.Add("contact@jossysola.com");
         return await _resend.EmailSendAsync(message);
     }
 }
