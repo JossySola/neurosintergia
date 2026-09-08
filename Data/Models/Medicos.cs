@@ -22,6 +22,8 @@ public class Medicos : IUserProfile
     public string? ApellidoMaterno { get; set; }
     public required DateOnly FechaNacimiento { get; set; }
     public required string CURP { get; set; }
+    public required string MunicipioNacimiento { get; set; }
+    public required string EstadoNacimiento { get; set; }
     public required string Telefono { get; set; }
     public string? TelefonoUrgencias { get; set; }
     public required string Email { get; set; }
