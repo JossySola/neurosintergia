@@ -1,4 +1,4 @@
-namespace friendly_broccoli.Data.Static;
+namespace neurosintergia.Data.Static;
 
 public record Regimen(int Codigo, string Reg);
 public record Uso(string Codigo, string CFDI);

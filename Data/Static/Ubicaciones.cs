@@ -1,4 +1,4 @@
-namespace friendly_broccoli.Data.Static;
+namespace neurosintergia.Data.Static;
 
 public record Estado(string Nombre, string[] Municipios);
 

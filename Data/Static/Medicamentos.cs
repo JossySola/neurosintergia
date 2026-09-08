@@ -1,4 +1,4 @@
-namespace friendly_broccoli.Data.Static;
+namespace neurosintergia.Data.Static;
 
 // This would be static data from a database
 public record Medicamento(string Nombre, string[] Dosis);
