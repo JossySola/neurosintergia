@@ -1,0 +1,170 @@
+@page "/Account/NewDoctor"
+@rendermode InteractiveServer
+
+@using neurosintergia.Data
+@using neurosintergia.Services
+@using neurosintergia.Data.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using System.ComponentModel.DataAnnotations
+
+@inject IDbContextFactory<ApplicationDbContext> ContextFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@inject AuthFlowService ServiceInstance
+@inject EmailSender EmailSender
+
+<PageTitle>Register Doctor</PageTitle>
+
+@if (FormModel == null)
+{
+    <p>Preparando nuevo registro...</p>
+}
+else if (isEmailSent)
+{
+    <p>Tu información ha sido enviada para su verificación por parte de un administrador. Recibirás un correo electrónico cuando tu registro haya sido aprobado. Al contrario, si la información enviada es incorrecta, recibirás un correo electrónico con el motivo por el cual la verificación fue rechazada.</p>
+}
+else
+{
+    <StatusMessage Message="@Message" />
+    <EditForm Model="FormModel" OnValidSubmit="HandleSubmit" FormName="RegisterDoctor" method="post">
+        <DataAnnotationsValidator />
+        <ValidationSummary role="alert" />
+
+        <label for="nombre">Nombre:</label>
+        <InputText @bind-Value="FormModel.Nombre" id="nombre" min="3" autocomplete="name" required />
+
+        <label for="apellido-paterno">Apellido paterno:</label>
+        <InputText @bind-Value="FormModel.ApellidoPaterno" id="apellido-paterno" min="3" autocomplete="family-name" required />
+
+        <label for="apellido-materno">Apellido materno:</label>
+        <InputText @bind-Value="FormModel.ApellidoMaterno" id="apellido-materno" min="3" />
+
+        <label for="fecha-nacimiento">Fecha de nacimiento:</label>
+        <InputDate @bind-Value="FormModel.FechaNacimiento" id="fecha-nacimiento" required />
+
+        <label for="curp">CURP:</label>
+        <InputText @bind-Value="FormModel.CURP" id="curp" required />
+
+        <label for="telefono">Teléfono:</label>
+        <InputText @bind-Value="FormModel.Telefono" id="telefono" required />
+
+        <label for="telefono-urgencias">Teléfono urgencias:</label>
+        <InputText @bind-Value="FormModel.TelefonoUrgencias" id="telefono-urgencias" />
+
+        <label for="email">Correo electrónico:</label>
+        <InputText @bind-Value="FormModel.Email" id="email" autocomplete="email" required />
+        
+        <button type="submit" disabled=@isSubmitting>Registrarse</button>
+    </EditForm>
+}
+
+@code 
+{
+    [SupplyParameterFromForm(FormName = "RegisterDoctor")]
+    private FormInputModel? FormModel { get; set; }
+    private IEnumerable<IdentityError>? identityErrors;
+
+    private bool isSubmitting = false;
+
+    private bool isEmailSent = false;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        FormModel ??= new();
+    }
+    protected async Task HandleSubmit() {
+        try
+        {
+            isSubmitting = true;
+            ApplicationUser user = new();
+            var DoctorModel = new Medicos 
+            {
+                Id = "default",
+                Create_At = DateTime.Now,
+                Nombre = FormModel!.Nombre,
+                ApellidoPaterno = FormModel!.ApellidoPaterno,
+                ApellidoMaterno = FormModel.ApellidoMaterno,
+                FechaNacimiento = FormModel.FechaNacimiento,
+                CURP = FormModel!.CURP,
+                MunicipioNacimiento = FormModel!.MunicipioNacimiento,
+                EstadoNacimiento = FormModel!.EstadoNacimiento,
+                Telefono = FormModel!.Telefono,
+                TelefonoUrgencias = FormModel!.TelefonoUrgencias,
+                Email = FormModel.Email,
+                Credenciales = FormModel!.Credenciales
+            };
+            var result = await ServiceInstance.SignUp(DoctorModel, DoctorModel.Email, "Medico", user);
+            if (!result.Succeeded)
+            {
+                identityErrors = result.Errors;
+                return;
+            }
+            if (result is not null)
+            {
+                using var context = await ContextFactory.CreateDbContextAsync();
+                var userId = await UserManager.GetUserIdAsync(user);
+                SignUpRequests newSignUp = new()
+                {
+                    Created_At = DateTime.Now,
+                    Id = userId,
+                    User = user,
+                };
+                await context.AddAsync(newSignUp);
+                await context.SaveChangesAsync();
+                if (IdentityResult.Success.Succeeded) 
+                {
+                    await EmailSender.SendPendingSignUpNotification();
+                }
+            }
+        }
+        finally 
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private sealed class FormInputModel
+    {
+        [Required(ErrorMessage = "El nombre es requerido")]
+        [MinLength(3, ErrorMessage = "El nombre debe tener un mínimo de 3 caracteres")]
+        public string Nombre { get; set; } = "";
+
+        [Required(ErrorMessage = "El apellido paterno es requerido")]
+        [MinLength(3, ErrorMessage = "El apellido paterno debe tener un mínimo de 3 caracteres")]
+        public string ApellidoPaterno { get; set; } = "";
+
+        public string ApellidoMaterno { get; set; } = "";
+
+        [Required(ErrorMessage = "La fecha de nacimiento es requerida")]
+        public DateOnly FechaNacimiento { get; set; }
+
+        [Required(ErrorMessage = "El CURP es requerido")]
+        [Length(18, 18, ErrorMessage = "El CURP debe tener 18 dígitos")]
+        public string CURP { get; set; } = "";
+
+        [Required(ErrorMessage = "El municipio de nacimiento es requerido")]
+        public string MunicipioNacimiento { get; set; } = "";
+
+        [Required(ErrorMessage = "El estado de nacimiento es requerido")]
+        public string EstadoNacimiento { get; set; } = "";
+
+        [Required(ErrorMessage = "El teléfono es requerido")]
+        [Phone(ErrorMessage = "Debes de ingresar un número de teléfono válido")]
+        [Length(10, 10, ErrorMessage = "El número de teléfono debe ser de 10 dígitos")]
+        public string Telefono { get; set; } = "";
+
+        public string TelefonoUrgencias { get; set; } = "";
+        
+        [Required(ErrorMessage = "El correo electrónico es requerido")]
+        [EmailAddress(ErrorMessage = "El correo electrónico debe ser válido")]
+        public string Email { get; set; } = "";
+        public List<Credenciales> Credenciales { get; set; } = [];
+    }
+}
