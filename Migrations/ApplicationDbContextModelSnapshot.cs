@@ -306,6 +306,41 @@ namespace neurosintergia.Migrations
                     b.ToTable("Admins");
                 });
 
+            modelBuilder.Entity("neurosintergia.Data.Models.Credenciales", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CedEsp")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CedProf")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Instituto")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MedicosId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SSA")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicosId");
+
+                    b.ToTable("Credenciales");
+                });
+
             modelBuilder.Entity("neurosintergia.Data.Models.Evoluciones", b =>
                 {
                     b.Property<Guid>("Id")
@@ -634,14 +669,9 @@ namespace neurosintergia.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CedEsp")
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
-
-                    b.Property<string>("CedProf")
+                    b.Property<string>("CURP")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Create_At")
                         .HasColumnType("datetime2");
@@ -650,10 +680,14 @@ namespace neurosintergia.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EstadoNacimiento")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateOnly>("FechaNacimiento")
                         .HasColumnType("date");
 
-                    b.Property<string>("Instituto")
+                    b.Property<string>("MunicipioNacimiento")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -661,32 +695,11 @@ namespace neurosintergia.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ReviewedByUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SSA")
-                        .HasMaxLength(9)
-                        .HasColumnType("nvarchar(9)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Telefono")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TelefonoUrgencias")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -825,6 +838,32 @@ namespace neurosintergia.Migrations
                     b.ToTable("Recetas");
                 });
 
+            modelBuilder.Entity("neurosintergia.Data.Models.SignUpRequests", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Created_At")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastReviewed")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SignUpRequests");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -938,6 +977,14 @@ namespace neurosintergia.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("neurosintergia.Data.Models.Credenciales", b =>
+                {
+                    b.HasOne("neurosintergia.Data.Models.Medicos", null)
+                        .WithMany("Credenciales")
+                        .HasForeignKey("MedicosId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("neurosintergia.Data.Models.Medicos", b =>
                 {
                     b.HasOne("neurosintergia.Data.ApplicationUser", "User")
@@ -958,6 +1005,22 @@ namespace neurosintergia.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("neurosintergia.Data.Models.SignUpRequests", b =>
+                {
+                    b.HasOne("neurosintergia.Data.ApplicationUser", "User")
+                        .WithOne()
+                        .HasForeignKey("neurosintergia.Data.Models.SignUpRequests", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("neurosintergia.Data.Models.Medicos", b =>
+                {
+                    b.Navigation("Credenciales");
                 });
 #pragma warning restore 612, 618
         }
