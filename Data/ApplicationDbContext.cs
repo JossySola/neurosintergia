@@ -37,6 +37,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         .WithOne()
         .HasForeignKey<Medicos>(m => m.Id)
         .OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<Medicos>()
+        .HasMany(m => m.Credenciales)
+        .WithOne()
+        .HasForeignKey("MedicosId")
+        .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Pacientes>()
         .HasOne(p => p.User)
