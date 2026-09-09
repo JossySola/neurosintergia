@@ -31,54 +31,90 @@ else
     <EditForm Model="FormModel" OnValidSubmit="HandleSubmit" FormName="RegisterDoctor" method="post">
         <DataAnnotationsValidator />
         <ValidationSummary role="alert" />
+        <fieldset>
+            <legend>Información general</legend>
+            <label for="nombre">Nombre:</label>
+            <InputText @bind-Value="FormModel.Nombre" id="nombre" min="3" autocomplete="name" required />
 
-        <label for="nombre">Nombre:</label>
-        <InputText @bind-Value="FormModel.Nombre" id="nombre" min="3" autocomplete="name" required />
+            <label for="apellido-paterno">Apellido paterno:</label>
+            <InputText @bind-Value="FormModel.ApellidoPaterno" id="apellido-paterno" min="3" autocomplete="family-name" required />
 
-        <label for="apellido-paterno">Apellido paterno:</label>
-        <InputText @bind-Value="FormModel.ApellidoPaterno" id="apellido-paterno" min="3" autocomplete="family-name" required />
+            <label for="apellido-materno">Apellido materno:</label>
+            <InputText @bind-Value="FormModel.ApellidoMaterno" id="apellido-materno" min="3" />
 
-        <label for="apellido-materno">Apellido materno:</label>
-        <InputText @bind-Value="FormModel.ApellidoMaterno" id="apellido-materno" min="3" />
+            <label for="fecha-nacimiento">Fecha de nacimiento:</label>
+            <InputDate @bind-Value="FormModel.FechaNacimiento" id="fecha-nacimiento" required />
 
-        <label for="fecha-nacimiento">Fecha de nacimiento:</label>
-        <InputDate @bind-Value="FormModel.FechaNacimiento" id="fecha-nacimiento" required />
+            <label for="curp">CURP:</label>
+            <InputText @bind-Value="FormModel.CURP" id="curp" required />
 
-        <label for="curp">CURP:</label>
-        <InputText @bind-Value="FormModel.CURP" id="curp" required />
-
-        <label for="estado">Estado de Nacimiento:</label>
-        <InputSelect @bind-Value="FormModel.EstadoNacimiento" id="estado" required>
-            @foreach (var Estado in Ubicaciones.Estados) 
-            {
-                <option value="@Estado.Nombre">@Estado.Nombre</option>
-            }
-        </InputSelect>
-
-        <label for="municipio">Municipio de Nacimiento:</label>
-        <InputSelect @bind-Value="FormModel.MunicipioNacimiento" id="municipio" disabled=(@FormModel.EstadoNacimiento.Length > 0) required>
-            @foreach (var Estado in Ubicaciones.Estados)
-            {
-                if (Estado.Nombre == FormModel.EstadoNacimiento)
+            <label for="estado">Estado de Nacimiento:</label>
+            <InputSelect @bind-Value="FormModel.EstadoNacimiento" id="estado" required>
+                @foreach (var Estado in Ubicaciones.Estados) 
                 {
-                    foreach (var Municipio in Estado.Municipios)
+                    <option value="@Estado.Nombre">@Estado.Nombre</option>
+                }
+            </InputSelect>
+
+            <label for="municipio">Municipio de Nacimiento:</label>
+            <InputSelect @bind-Value="FormModel.MunicipioNacimiento" id="municipio" disabled="@(string.IsNullOrEmpty(FormModel.EstadoNacimiento))" required>
+                <option value="">--Selecciona una opción--</option>
+                @foreach (var Estado in Ubicaciones.Estados)
+                {
+                    if (Estado.Nombre == FormModel.EstadoNacimiento)
                     {
-                        <option value="@Municipio">@Municipio</option>
+                        foreach (var Municipio in Estado.Municipios)
+                        {
+                            <option value="@Municipio">@Municipio</option>
+                        }
                     }
                 }
-            }
-        </InputSelect>
+            </InputSelect>
+        </fieldset>
 
-        <label for="telefono">Teléfono:</label>
-        <InputText @bind-Value="FormModel.Telefono" id="telefono" required />
+        <fieldset disabled="@isSubmitting">
+            <legend>Información académica</legend>
+            <ul>
+                @foreach (var credencial in FormModel.Credenciales)
+                {
+                    <li @key="credencial.Id">
+                        <label for="instituto-@credencial.Id">Instituto:</label>
+                        <InputText @bind-Value="credencial.Instituto" id="@($"instituto-{credencial.Id}")" />
 
-        <label for="telefono-urgencias">Teléfono urgencias:</label>
-        <InputText @bind-Value="FormModel.TelefonoUrgencias" id="telefono-urgencias" />
+                        <label for="titulo-@credencial.Id">Título:</label>
+                        <InputText @bind-Value="credencial.Titulo" id="@($"titulo-{credencial.Id}")" />
 
-        <label for="email">Correo electrónico:</label>
-        <InputText @bind-Value="FormModel.Email" id="email" autocomplete="email" required />
-        
-        <button type="submit" disabled=@isSubmitting>Registrarse</button>
+                        <label for="cedprof-@credencial.Id">Cédula profesional:</label>
+                        <InputText @bind-Value="credencial.CedProf" id="@($"cedprof-{credencial.Id}")" />
+
+                        <label for="cedesp-@credencial.Id">Cédula de especialidad:</label>
+                        <InputText @bind-Value="credencial.CedEsp" id="@($"cedesp-{credencial.Id}")" />
+
+                        <label for="ssa-@credencial.Id">SSA:</label>
+                        <InputText @bind-Value="credencial.SSA" id="@($"ssa-{credencial.Id}")" />
+
+                        <button type="button" @onclick="() => RemoveCredencial(credencial)">Eliminar título</button>
+                    </li>
+                }
+            </ul>
+            <button type="button" @onclick="AddCredencial">Agregar título</button>
+        </fieldset>
+
+        <fieldset>
+            <legend>Información de contacto</legend>
+            <label for="telefono">Teléfono:</label>
+            <InputText @bind-Value="FormModel.Telefono" id="telefono" required />
+
+            <label for="telefono-urgencias">Teléfono urgencias:</label>
+            <InputText @bind-Value="FormModel.TelefonoUrgencias" id="telefono-urgencias" />
+
+            <label for="email">Correo electrónico:</label>
+            <InputText @bind-Value="FormModel.Email" id="email" autocomplete="email" required />
+        </fieldset>
+
+        <button type="submit" disabled=@isSubmitting>
+            Registrarse
+        </button>
     </EditForm>
 }
 
@@ -102,6 +138,16 @@ else
         base.OnInitialized();
         FormModel ??= new();
     }
+    private void AddCredencial()
+    {
+        FormModel!.Credenciales.Add(new CredencialInputModel());
+    }
+
+    private void RemoveCredencial(CredencialInputModel credencial)
+    {
+        FormModel!.Credenciales.Remove(credencial);
+    }
+
     protected async Task HandleSubmit() {
         try
         {
@@ -122,6 +168,14 @@ else
                 TelefonoUrgencias = FormModel!.TelefonoUrgencias,
                 Email = FormModel.Email,
                 Credenciales = FormModel!.Credenciales
+                    .Select(credencial => new Credenciales(
+                        credencial.Id,
+                        credencial.Instituto,
+                        credencial.Titulo,
+                        credencial.CedProf,
+                        credencial.CedEsp,
+                        credencial.SSA))
+                    .ToList()
             };
             var result = await ServiceInstance.SignUp(DoctorModel, DoctorModel.Email, "Medico", user);
             if (!result.Succeeded)
@@ -137,13 +191,14 @@ else
                 {
                     Created_At = DateTime.Now,
                     Id = userId,
-                    User = user,
+                    // Identity already saved the user in a different context; link by FK only.
                 };
                 await context.AddAsync(newSignUp);
                 await context.SaveChangesAsync();
                 if (IdentityResult.Success.Succeeded) 
                 {
                     await EmailSender.SendPendingSignUpNotification();
+                    isEmailSent = true;
                 }
             }
         }
@@ -188,6 +243,21 @@ else
         [Required(ErrorMessage = "El correo electrónico es requerido")]
         [EmailAddress(ErrorMessage = "El correo electrónico debe ser válido")]
         public string Email { get; set; } = "";
-        public List<Credenciales> Credenciales { get; set; } = [];
+        public List<CredencialInputModel> Credenciales { get; set; } = [];
+    }
+
+    private sealed class CredencialInputModel
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        [Required(ErrorMessage = "El nombre oficial de la institución es requerida")]
+        public string Instituto { get; set; } = "";
+        [Required(ErrorMessage = "El título universitario es requerido")]
+        public string Titulo { get; set; } = "";
+        [Length(7,8, ErrorMessage = "Verifica el número de caracteres de la cédula profesional")]
+        public string CedProf { get; set; } = "";
+        [Length(7,8, ErrorMessage = "Verifica el número de caracteres de la cédula de especialidad")]
+        public string CedEsp { get; set; } = "";
+        [Length(8,9, ErrorMessage = "Verifica el número de caracteres del SSA")]
+        public string SSA { get; set; } = "";
     }
 }
