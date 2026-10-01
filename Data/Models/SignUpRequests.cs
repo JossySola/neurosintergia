@@ -13,3 +13,21 @@ public class SignUpRequests
     public string? Comment { get; set; }
     public DateTime? LastReviewed { get; set; }
 }
+
+public sealed record PendingSignUpRow (
+    string Id,
+    DateTime Created_At,
+    string Status,
+    string? ReviewedBy,
+    string? Comment,
+    DateTime? LastReviewed,
+    string Nombre,
+    string ApellidoPaterno,
+    string? ApellidoMaterno,
+    DateOnly FechaNacimiento,
+    string CURP,
+    string MunicipioNacimiento,
+    string EstadoNacimiento,
+    string Email,
+    List<Credenciales>? Credenciales
+);
