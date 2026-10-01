@@ -1,3 +1,59 @@
 @page "/Dashboard"
 
-<h1>Dashboard</h1>
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using neurosintergia.Data
+@using neurosintergia.Data.Models
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@attribute [Authorize]
+
+<PageTitle>Dashboard</PageTitle>
+
+<AuthorizeView Roles="SuperAdmin">
+    @if (Requests is null)
+    {
+        <p>Loading requests...</p>
+    }
+    else
+    {
+        <PendingSignUps Requests=@Requests />
+    }
+
+</AuthorizeView>
+
+@code
+{
+    private List<PendingSignUpRow>? Requests;
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        Requests = await db.SignUpRequests
+        .AsNoTracking()
+        .Join(
+            db.Medicos.AsNoTracking(),
+            request => request.Id,
+            medico => medico.Id, 
+            (request, medico) => new PendingSignUpRow(
+                request.Id,
+                request.Created_At,
+                request.Status,
+                request.ReviewedBy,
+                request.Comment,
+                request.LastReviewed,
+                medico.Nombre,
+                medico.ApellidoPaterno,
+                medico.ApellidoMaterno,
+                medico.FechaNacimiento,
+                medico.CURP,
+                medico.MunicipioNacimiento,
+                medico.EstadoNacimiento,
+                medico.Email,
+                medico.Credenciales
+            )
+        )
+        .ToListAsync();
+    }
+}
