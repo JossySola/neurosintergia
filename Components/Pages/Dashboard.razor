@@ -20,7 +20,6 @@
     {
         <PendingSignUps Requests=@Requests />
     }
-
 </AuthorizeView>
 
 @code
@@ -32,10 +31,11 @@
 
         Requests = await db.SignUpRequests
         .AsNoTracking()
+        .Where(request => request.Status == "pending")
         .Join(
             db.Medicos.AsNoTracking(),
             request => request.Id,
-            medico => medico.Id, 
+            medico => medico.Id,
             (request, medico) => new PendingSignUpRow(
                 request.Id,
                 request.Created_At,
