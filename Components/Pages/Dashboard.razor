@@ -31,7 +31,7 @@
 
         Requests = await db.SignUpRequests
         .AsNoTracking()
-        .Where(request => request.Status == "pending")
+        .Where(request => request.Status.ToUpper() == "pending".ToUpper())
         .Join(
             db.Medicos.AsNoTracking(),
             request => request.Id,
