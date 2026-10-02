@@ -8,26 +8,44 @@
         <thead>
             <tr>
                 <th scope="col" rowspan="2">Name</th>
+                <th scope="col" colspan="2">Last Name</th>
                 <th scope="col" rowspan="2">Status</th>
+                <th scope="col" rowspan="2">CURP</th>
+                <th scope="col" rowspan="2">Birth date</th>
+                <th scope="col" rowspan="2">Province</th>
+                <th scope="col" rowspan="2">State</th>
                 <th scope="col" colspan="3">Academic intel</th>
                 <th scope="col" rowspan="2">Sign Up Date</th>
             </tr>
             <tr>
-                <th scope="col">Institute</th>
-                <th scope="col">Ced. Prof.</th>
-                <th scope="col">Ced. Esp.</th>
+                <td scope="col">Father Lastname</td>
+                <td scope="col">Mother Lastname</td>
+                <td scope="col">Institute</td>
+                <td scope="col">Ced. Prof.</td>
+                <td scope="col">Ced. Esp.</td>
             </tr>
         </thead>
         <tbody>
         @foreach (var Request in Requests)
         {
             <tr>
-                <th scope="row">Request.Name</th>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
+                <th scope="row">@Request.Nombre</th>
+                <td>@Request.ApellidoPaterno</td>
+                <td>@Request.ApellidoMaterno</td>
+                <td>@Request.Status.ToUpper()</td>
+                <td>@Request.CURP</td>
+                <td>@Request.FechaNacimiento</td>
+                <td>@Request.MunicipioNacimiento</td>
+                <td>@Request.EstadoNacimiento</td>
+                @if (Request.Credenciales is not null)
+                {
+                    foreach (var Credencial in Request.Credenciales)
+                    {
+                        <td>@Credencial.Instituto</td>
+                        <td>@Credencial.CedProf</td>
+                        <td>@Credencial.CedEsp</td>        
+                    }
+                }
                 <td><time datetime="@Request.Created_At">@Request.Created_At</time></td>
             </tr>
         }
@@ -38,6 +56,6 @@
 @code 
 {
     [Parameter]
-    public List<PendingSignUpRow> Requests {get; set;} = new();
+    public List<PendingSignUpRow> Requests { get; set; } = new();
     
 }
