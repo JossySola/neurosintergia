@@ -55,28 +55,16 @@
 {
     private SignUpApproval SignUpApprovalModel { get; set; } = default!;
     private ApplicationUser? user = default!;
+    private string? userId { get; set; }
     private string? message;
     protected override async Task OnInitializedAsync()
     {
         SignUpApprovalModel ??= new ();
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = await UserManager.GetUserAsync(authState.User);
+        if (user is not null) userId = user.Id;
     }
 
-    private sealed class SignUpApproval
-    {
-        [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
-        public string Code { get; set; } = "";
-        public bool Grupo_I { get; set; } = false;
-        public bool Grupo_II { get; set; } = false;
-        public bool Grupo_III { get; set; } = false;
-        public bool Grupo_IV { get; set; } = false; 
-        public bool Grupo_V { get; set; } = false;
-        public bool Grupo_VI { get; set; } = false;
-    }
     private async Task OnValidSubmitAsync()
     {
         if (user is null) return;
@@ -98,7 +86,23 @@
             // Show a validation error; do not approve.
             return;
         }
-        // Continue with approval.
+        // Change status at SignUpRequests table.
+        // Create record at Medicos_Funciones
 
+    }
+
+    private sealed class SignUpApproval
+    {
+        [Required]
+        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Text)]
+        [Display(Name = "Authenticator code")]
+        public string Code { get; set; } = "";
+        public bool Grupo_I { get; set; } = false;
+        public bool Grupo_II { get; set; } = false;
+        public bool Grupo_III { get; set; } = false;
+        public bool Grupo_IV { get; set; } = false; 
+        public bool Grupo_V { get; set; } = false;
+        public bool Grupo_VI { get; set; } = false;
     }
 }
