@@ -4,13 +4,9 @@ namespace neurosintergia.Data.Models;
 
 public class Recetas
 {
-    [Required(ErrorMessage = "El identificador es requerido")]
     public required Guid Id { get; set; }
-    [Required(ErrorMessage = "La fecha de creación es requerida")]
     public required DateTime Created_At { get; set; }
-    [Required(ErrorMessage = "El identificador del médico es requerido")]
     public required string MedicoId { get; set; }
-    [Required(ErrorMessage = "El identificador del paciente es requerido")]
     public required string PacienteId { get; set; }
     [Required(ErrorMessage = "El medicamento es requerido")]
     public required string Medicamento { get; set; }

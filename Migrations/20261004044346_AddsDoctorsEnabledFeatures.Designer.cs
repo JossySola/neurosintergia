@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using neurosintergia.Data;
 
@@ -11,9 +12,11 @@ using neurosintergia.Data;
 namespace neurosintergia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261004044346_AddsDoctorsEnabledFeatures")]
+    partial class AddsDoctorsEnabledFeatures
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -707,41 +710,6 @@ namespace neurosintergia.Migrations
                     b.ToTable("Medicos");
                 });
 
-            modelBuilder.Entity("neurosintergia.Data.Models.Medicos_Funciones", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("Grupo_I")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Grupo_II")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Grupo_III")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Grupo_IV")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Grupo_V")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Grupo_VI")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("MedicoId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MedicoId")
-                        .IsUnique();
-
-                    b.ToTable("Medicos_Funciones");
-                });
-
             modelBuilder.Entity("neurosintergia.Data.Models.Pacientes", b =>
                 {
                     b.Property<string>("Id")
@@ -849,14 +817,14 @@ namespace neurosintergia.Migrations
 
                     b.Property<string>("MedicoId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nota")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PacienteId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PeriodoTiempo")
                         .HasColumnType("int");
@@ -869,10 +837,6 @@ namespace neurosintergia.Migrations
                         .HasColumnType("bit");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MedicoId");
-
-                    b.HasIndex("PacienteId");
 
                     b.ToTable("Recetas");
                 });
@@ -1035,15 +999,6 @@ namespace neurosintergia.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("neurosintergia.Data.Models.Medicos_Funciones", b =>
-                {
-                    b.HasOne("neurosintergia.Data.Models.Medicos", null)
-                        .WithOne()
-                        .HasForeignKey("neurosintergia.Data.Models.Medicos_Funciones", "MedicoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("neurosintergia.Data.Models.Pacientes", b =>
                 {
                     b.HasOne("neurosintergia.Data.ApplicationUser", "User")
@@ -1053,21 +1008,6 @@ namespace neurosintergia.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("neurosintergia.Data.Models.Recetas", b =>
-                {
-                    b.HasOne("neurosintergia.Data.Models.Medicos", null)
-                        .WithMany()
-                        .HasForeignKey("MedicoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("neurosintergia.Data.Models.Pacientes", null)
-                        .WithMany()
-                        .HasForeignKey("PacienteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("neurosintergia.Data.Models.SignUpRequests", b =>

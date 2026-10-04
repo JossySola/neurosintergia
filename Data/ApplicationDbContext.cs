@@ -26,6 +26,27 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         .HasForeignKey<SignUpRequests>(a => a.Id)
         .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Entity<Medicos_Funciones>()
+        .HasOne<Medicos>()
+        .WithOne()
+        .HasForeignKey<Medicos_Funciones>(f => f.MedicoId)
+        .HasPrincipalKey<Medicos>(m => m.Id)
+        .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Recetas>()
+        .HasOne<Medicos>()
+        .WithMany()
+        .HasForeignKey(r => r.MedicoId)
+        .HasPrincipalKey(m => m.Id)
+        .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Recetas>()
+        .HasOne<Pacientes>()
+        .WithMany()
+        .HasForeignKey(r => r.PacienteId)
+        .HasPrincipalKey(p => p.Id)
+        .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<Admins>()
         .HasOne(a => a.User)
         .WithOne()
@@ -37,6 +58,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         .WithOne()
         .HasForeignKey<Medicos>(m => m.Id)
         .OnDelete(DeleteBehavior.Cascade);
+
         builder.Entity<Medicos>()
         .HasMany(m => m.Credenciales)
         .WithOne()
