@@ -1,0 +1,42 @@
+@rendermode InteractiveServer
+
+<button commandfor="@ModalId" command="show-modal">@Action</button>
+<dialog id="@ModalId">
+    @if (Action.Length > 0)
+    {
+        if (Action.ToUpper() == "APPROVE")
+        {
+            <SignUpApprovalForm />
+        }
+        else
+        {
+            <form>
+                <button type="submit" formmethod="dialog">Decline</button>
+            </form>
+        }
+    }
+    <button commandfor="@ModalId" command="close">Close</button>
+</dialog>
+
+@code 
+{
+    [Parameter]
+    public string ModalId { get; set; } = ""; 
+    [Parameter]
+    public string Action { get; set; } = "";
+    private void handleSignUpApproval()
+    {
+
+    }
+    private void handleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Delete" || args.Key == "Backspace")
+        {
+            // Handle deletion
+        }
+        else if (args.Key.Length == 1 && char.IsDigit(args.Key[0]))
+        {
+            // Handle a number
+        }
+    }
+}

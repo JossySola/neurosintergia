@@ -1,0 +1,100 @@
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using neurosintergia.Data
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<EditForm Model="SignUpApprovalModel" FormName="signup-approval" OnValidSubmit="OnValidSubmitAsync" method="post">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="text-danger" role="alert" />
+    
+    <fieldset>
+        <h3>Medication groups enabled:</h3>
+        <label>
+            Group I
+            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_I" />
+        </label>
+        <label>
+            Group II
+            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_II" />
+        </label>
+        <label>
+            Group III
+            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_III" />
+        </label>
+        <label>
+            Group IV
+            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_IV" />
+        </label>
+        <label>
+            Group V
+            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_V" />
+        </label>
+        <label>
+            Group VI
+            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_VI" />
+        </label>
+    </fieldset>
+    <div class="form-floating mb-3">
+        <InputText @bind-Value="SignUpApprovalModel.Code" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
+        <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
+        <ValidationMessage For="() => SignUpApprovalModel.Code" class="text-danger" />
+    </div>
+    <div>
+        <button type="submit" class="w-100 btn btn-lg btn-primary">Approve</button>
+    </div>
+</EditForm>
+
+@code 
+{
+    private SignUpApproval SignUpApprovalModel { get; set; } = default!;
+    private ApplicationUser? user = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SignUpApprovalModel ??= new ();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = await UserManager.GetUserAsync(authState.User);
+    }
+
+    private sealed class SignUpApproval
+    {
+        [Required]
+        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Text)]
+        [Display(Name = "Authenticator code")]
+        public string Code { get; set; } = "";
+        public bool Grupo_I { get; set; } = false;
+        public bool Grupo_II { get; set; } = false;
+        public bool Grupo_III { get; set; } = false;
+        public bool Grupo_IV { get; set; } = false; 
+        public bool Grupo_V { get; set; } = false;
+        public bool Grupo_VI { get; set; } = false;
+    }
+    private async Task OnValidSubmitAsync()
+    {
+        if (user is null) return;
+
+        var authenticatorCode = SignUpApprovalModel.Code
+        .Replace("", string.Empty)
+        .Replace("-", string.Empty);
+
+        var isValid = await UserManager.VerifyTwoFactorTokenAsync(
+            user, 
+            UserManager.Options.Tokens.AuthenticatorTokenProvider, 
+            SignUpApprovalModel.Code
+        );
+
+        if (!isValid)
+        {
+            // Show a validation error; do not approve.
+            return;
+        }
+
+        // Continue with approval.
+        
+    }
+}
