@@ -2,11 +2,14 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
+@using neurosintergia.Components.Account.Shared
 @using neurosintergia.Data
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
+@inject ILogger<SignUpApprovalForm> Logger
 
+<StatusMessage Message="@message" />
 <EditForm Model="SignUpApprovalModel" FormName="signup-approval" OnValidSubmit="OnValidSubmitAsync" method="post">
     <DataAnnotationsValidator />
     <ValidationSummary class="text-danger" role="alert" />
@@ -52,7 +55,7 @@
 {
     private SignUpApproval SignUpApprovalModel { get; set; } = default!;
     private ApplicationUser? user = default!;
-
+    private string? message;
     protected override async Task OnInitializedAsync()
     {
         SignUpApprovalModel ??= new ();
@@ -90,11 +93,12 @@
 
         if (!isValid)
         {
+            Logger.LogWarning("Invalid Authentication Code");
+            message = "Invalid Authentication Code";
             // Show a validation error; do not approve.
             return;
         }
-
         // Continue with approval.
-        
+
     }
 }
