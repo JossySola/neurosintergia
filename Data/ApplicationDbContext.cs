@@ -16,6 +16,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<InterrogatoriosIniciales> InterrogatoriosIniciales { get; set; } = default!;
     public DbSet<Evoluciones> Evoluciones { get; set; } = default!;
     public DbSet<Exploraciones> Exploraciones { get; set; } = default!;
+    public DbSet<Medicos_Funciones> Medicos_Funciones { get; set; } = default!;
+    
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
