@@ -2,12 +2,17 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using neurosintergia.Components.Account.Shared
 @using neurosintergia.Data
+@using neurosintergia.Data.Models
+@using neurosintergia.Services
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject ILogger<SignUpApprovalForm> Logger
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject EmailSender Sender
 
 <StatusMessage Message="@message" />
 <EditForm Model="SignUpApprovalModel" FormName="signup-approval" OnValidSubmit="OnValidSubmitAsync" method="post">
@@ -53,16 +58,20 @@
 
 @code 
 {
+    [Parameter]
+    public required string DoctorId { get; set; }
+    [Parameter]
+    public required string Email { get; set; }
     private SignUpApproval SignUpApprovalModel { get; set; } = default!;
     private ApplicationUser? user = default!;
-    private string? userId { get; set; }
+    private string? AdminId { get; set; }
     private string? message;
     protected override async Task OnInitializedAsync()
     {
         SignUpApprovalModel ??= new ();
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = await UserManager.GetUserAsync(authState.User);
-        if (user is not null) userId = user.Id;
+        if (user is not null) AdminId = user.Id;
     }
 
     private async Task OnValidSubmitAsync()
@@ -86,9 +95,44 @@
             // Show a validation error; do not approve.
             return;
         }
-        // Change status at SignUpRequests table.
-        // Create record at Medicos_Funciones
 
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            
+            // Entity
+            var request = await db.SignUpRequests.SingleOrDefaultAsync(r => r.Id == DoctorId);
+            
+            // Alter column and change status from 'pending' to 'approved'
+            if (request is null)
+            {
+                message = "Sign up request not found";
+                return;
+            }
+            request.Status = "approved";
+            request.ReviewedBy = AdminId;
+            request.LastReviewed = DateTime.UtcNow;
+
+            // Creates a record in Medicos_Funciones table
+            var funciones = new Medicos_Funciones
+            {
+            Id = Guid.CreateVersion7().ToString(),
+            MedicoId = DoctorId,
+            Grupo_I = SignUpApprovalModel.Grupo_I,
+            Grupo_II = SignUpApprovalModel.Grupo_II,
+            Grupo_III = SignUpApprovalModel.Grupo_III,
+            Grupo_IV = SignUpApprovalModel.Grupo_IV,
+            Grupo_V = SignUpApprovalModel.Grupo_V,
+            Grupo_VI = SignUpApprovalModel.Grupo_VI  
+            };
+            db.Medicos_Funciones.Add(funciones);
+            await db.SaveChangesAsync();
+            await Sender.SendApprovedSignUpConfirmation(Email);
+        }
+        catch(Exception error)
+        {
+            message = error.ToString();
+        }
     }
 
     private sealed class SignUpApproval
