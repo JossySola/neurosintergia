@@ -30,4 +30,15 @@ public class EmailSender(IResend resend)
         message.To.Add("contact@jossysola.com");
         return await _resend.EmailSendAsync(message);
     }
+    public async Task<ResendResponse> SendApprovedSignUpConfirmation(string email)
+    {
+        var message = new EmailMessage
+        {
+            From = "no-reply@jossysola.com",
+            Subject = "Neurosintergia: Your account has been approved!",
+            HtmlBody = "<p>Your account has been approved!</p>"
+        };
+        message.To.Add(email);
+        return await _resend.EmailSendAsync(message);
+    }
 }
