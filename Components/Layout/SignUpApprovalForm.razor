@@ -14,47 +14,54 @@
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject EmailSender Sender
 
-<StatusMessage Message="@message" />
-<EditForm Model="SignUpApprovalModel" FormName="signup-approval" OnValidSubmit="OnValidSubmitAsync" method="post">
-    <DataAnnotationsValidator />
-    <ValidationSummary class="text-danger" role="alert" />
-    
-    <fieldset>
-        <h3>Medication groups enabled:</h3>
-        <label>
-            Group I
-            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_I" />
-        </label>
-        <label>
-            Group II
-            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_II" />
-        </label>
-        <label>
-            Group III
-            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_III" />
-        </label>
-        <label>
-            Group IV
-            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_IV" />
-        </label>
-        <label>
-            Group V
-            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_V" />
-        </label>
-        <label>
-            Group VI
-            <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_VI" />
-        </label>
-    </fieldset>
-    <div class="form-floating mb-3">
-        <InputText @bind-Value="SignUpApprovalModel.Code" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-        <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
-        <ValidationMessage For="() => SignUpApprovalModel.Code" class="text-danger" />
-    </div>
-    <div>
-        <button type="submit" class="w-100 btn btn-lg btn-primary">Approve</button>
-    </div>
-</EditForm>
+@if (SignUpApprovalModel is not null)
+{
+    <StatusMessage Message="@message" />
+    <EditForm Model="SignUpApprovalModel" FormName="signup-approval" OnValidSubmit="OnValidSubmitAsync" method="post">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-danger" role="alert" />
+        
+        <fieldset>
+            <h3>Medication groups enabled:</h3>
+            <label>
+                Group I
+                <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_I" />
+            </label>
+            <label>
+                Group II
+                <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_II" />
+            </label>
+            <label>
+                Group III
+                <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_III" />
+            </label>
+            <label>
+                Group IV
+                <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_IV" />
+            </label>
+            <label>
+                Group V
+                <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_V" />
+            </label>
+            <label>
+                Group VI
+                <InputCheckbox @bind-Value="SignUpApprovalModel.Grupo_VI" />
+            </label>
+        </fieldset>
+        <div class="form-floating mb-3">
+            <InputText @bind-Value="SignUpApprovalModel.Code" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
+            <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
+            <ValidationMessage For="() => SignUpApprovalModel.Code" class="text-danger" />
+        </div>
+        <div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Approve</button>
+        </div>
+    </EditForm>
+} 
+else
+{
+  <p>Loading...</p>
+}
 
 @code 
 {
@@ -63,27 +70,27 @@
     [Parameter]
     public required string Email { get; set; }
     private SignUpApproval SignUpApprovalModel { get; set; } = default!;
-    private ApplicationUser? user = default!;
+    private ApplicationUser? Admin = default!;
     private string? AdminId { get; set; }
     private string? message;
     protected override async Task OnInitializedAsync()
     {
         SignUpApprovalModel ??= new ();
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        user = await UserManager.GetUserAsync(authState.User);
-        if (user is not null) AdminId = user.Id;
+        Admin = await UserManager.GetUserAsync(authState.User);
+        if (Admin is not null) AdminId = Admin.Id;
     }
 
     private async Task OnValidSubmitAsync()
     {
-        if (user is null) return;
+        if (Admin is null) return;
 
         var authenticatorCode = SignUpApprovalModel.Code
         .Replace("", string.Empty)
         .Replace("-", string.Empty);
 
         var isValid = await UserManager.VerifyTwoFactorTokenAsync(
-            user, 
+            Admin, 
             UserManager.Options.Tokens.AuthenticatorTokenProvider, 
             SignUpApprovalModel.Code
         );
@@ -99,7 +106,6 @@
         try
         {
             await using var db = await DbFactory.CreateDbContextAsync();
-            
             // Entity
             var request = await db.SignUpRequests.SingleOrDefaultAsync(r => r.Id == DoctorId);
             
@@ -126,7 +132,11 @@
             Grupo_VI = SignUpApprovalModel.Grupo_VI  
             };
             db.Medicos_Funciones.Add(funciones);
+
+            // Save db changes
             await db.SaveChangesAsync();
+
+            // Send email confirmation
             await Sender.SendApprovedSignUpConfirmation(Email);
         }
         catch(Exception error)
