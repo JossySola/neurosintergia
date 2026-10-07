@@ -41,4 +41,15 @@ public class EmailSender(IResend resend)
         message.To.Add(email);
         return await _resend.EmailSendAsync(message);
     }
+    public async Task<ResendResponse> SendDeniedSignUpEmail(string email, string reason, string field)
+    {
+        var message = new EmailMessage
+        {
+            From = "no-reply@jossysola.com",
+            Subject = "Neurosintergia: Pending sign up process",
+            HtmlBody = $"<p>There is information in your sign up process to be revised. The reason being: {reason} specifically in {field}.</p>"
+        };
+        message.To.Add(email);
+        return await _resend.EmailSendAsync(message);
+    }
 }
