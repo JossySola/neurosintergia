@@ -1,0 +1,142 @@
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using neurosintergia.Components.Account.Shared
+@using neurosintergia.Data
+@using neurosintergia.Services
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject EmailSender Sender
+
+@if (SignUpDenialModel is not null)
+{
+    <StatusMessage Message="@message" />
+    <EditForm Model="SignUpDenialModel" FormName="signup-denial">
+        <DataAnnotationsValidator />
+        <label>
+            Reason for denial:
+            <InputSelect @bind-Value="SignUpDenialModel.Reason">
+                <option checked="@(SignUpDenialModel.Reason == "")" value="">
+                    Selected an option
+                </option>
+                <option checked="@(SignUpDenialModel.Reason == "Credenciales invalidas")" value="Credenciales invalidas">
+                    Credenciales invalidas
+                </option>
+                <option checked="@(SignUpDenialModel.Reason == "Credenciales incompletas")" value="Credenciales incompletas">
+                    Credenciales incompletas
+                </option>
+                <option checked="@(SignUpDenialModel.Reason == "Datos personales invalidos")" value="Datos personales invalidos">
+                    Datos personales invalidos
+                </option>
+                <option checked="@(SignUpDenialModel.Reason == "Datos personales incompletos")" value="Datos personales incompletos">
+                    Datos personales incompletos
+                </option>
+                <option checked="@(SignUpDenialModel.Reason == "Datos de contacto incompletos")" value="Datos de contacto incompletos">
+                    Datos de contacto incompletos
+                </option>
+            </InputSelect>
+        </label>
+        <label>
+            Specific malformed input:
+            <InputSelect @bind-Value="SignUpDenialModel.InvalidInput">
+                <option checked="@(SignUpDenialModel.InvalidInput == "")" value="">
+                    Select an option
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Nombre")" value="Nombre">
+                    Nombre
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "CURP")" value="CURP">
+                    CURP
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Lugar de nacimiento")" value="Lugar de nacimiento">
+                    Lugar de nacimiento
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Fecha de nacimiento")" value="Fecha de nacimiento">
+                    Fecha de nacimiento
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Instituto académico")" value="Instituto académico">
+                    Instituto académico
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Título académico")" value="Título académico">
+                    Título académico
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Cédula Profesional")" value="Cédula Profesional">
+                    Cédula Profesional
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Cédula de Especialidad")" value="Cédula de Especialidad">
+                    Cédula de Especialidad
+                </option>
+                <option checked="@(SignUpDenialModel.InvalidInput == "Número SSA")" value="Número SSA">
+                    Número SSA
+                </option>
+            </InputSelect>
+        </label>
+        <label>
+            Comments:
+            <InputTextArea @bind-Value="SignUpDenialModel.Comment" />
+        </label>
+    </EditForm> 
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code 
+{
+    [Parameter]
+    public required string DoctorId { get; set; }
+    [Parameter]
+    public required string Email { get; set; }
+    private string? AdminId { get; set; }
+    private string message = "";
+    private ApplicationUser? Admin = default!;
+    private SignUpDenial? SignUpDenialModel { get; set; } = default!;
+    protected override async Task OnInitializedAsync()
+    {
+        SignUpDenialModel ??= new();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        Admin = await UserManager.GetUserAsync(authState.User);
+        if (Admin is not null) AdminId = Admin.Id;
+    }
+    private async Task OnValidSubmitAsync()
+    {
+        if (Admin is null) return;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            // Entity
+            var request = await db.SignUpRequests.SingleOrDefaultAsync(r => r.Id == DoctorId);
+
+            // Alter column and change status from 'pending' to 'declined'
+            if (request is null)
+            {
+                message = "Sign up request not found";
+                return;
+            }
+            request.Status = "declined";
+            request.ReviewedBy = AdminId;
+            request.LastReviewed = DateTime.UtcNow;
+            request.Comment = SignUpDenialModel!.Comment;
+
+            // Save db changes
+            await db.SaveChangesAsync();
+
+            // Send notification email
+            await Sender.SendDeniedSignUpEmail(Email, SignUpDenialModel!.Reason, SignUpDenialModel!.InvalidInput);
+        }
+        catch (Exception error)
+        {
+            message = error.ToString();
+        }
+    }
+    private sealed class SignUpDenial
+    {
+        public string Reason { get; set; } = "";
+        public string InvalidInput { get; set; } = "";
+        public string Comment { get; set; } = "";
+    }
+}
