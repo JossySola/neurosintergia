@@ -17,7 +17,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthFlowService>();
-builder.Services.AddScoped<SignUpService>();
+builder.Services.AddScoped<SignUpRequestsServices>();
 
 builder.Services.AddAuthentication(options =>
     {

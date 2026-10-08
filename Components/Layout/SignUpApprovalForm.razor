@@ -12,7 +12,7 @@
 @inject ILogger<SignUpApprovalForm> Logger
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject EmailSender Sender
-@inject SignUpService SignUpService
+@inject SignUpRequestsServices SignUpService
 
 @if (SignUpApprovalModel is not null)
 {

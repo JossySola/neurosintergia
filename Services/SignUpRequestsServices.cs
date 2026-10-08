@@ -4,7 +4,7 @@ using neurosintergia.Data.Models;
 
 namespace neurosintergia.Services;
 
-public class SignUpService(IDbContextFactory<ApplicationDbContext> factory)
+public class SignUpRequestsServices(IDbContextFactory<ApplicationDbContext> factory)
 {
     public async Task<SignUpRequests?> GetSignUpRequests(string DoctorId)
     {

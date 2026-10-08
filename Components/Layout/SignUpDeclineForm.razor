@@ -10,7 +10,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject EmailSender Sender
-@inject SignUpService SignUpService
+@inject SignUpRequestsServices SignUpService
 
 @if (SignUpDenialModel is not null)
 {
