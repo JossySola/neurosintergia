@@ -5,7 +5,6 @@
 @using Microsoft.EntityFrameworkCore
 @using neurosintergia.Components.Account.Shared
 @using neurosintergia.Data
-@using neurosintergia.Data.Models
 @using neurosintergia.Services
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -13,6 +12,7 @@
 @inject ILogger<SignUpApprovalForm> Logger
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject EmailSender Sender
+@inject SignUpService SignUpService
 
 @if (SignUpApprovalModel is not null)
 {
@@ -67,17 +67,19 @@ else
 {
     [Parameter]
     public required string DoctorId { get; set; }
+
     [Parameter]
     public required string Email { get; set; }
-    private SignUpApproval SignUpApprovalModel { get; set; } = default!;
-    private ApplicationUser? Admin = default!;
+
+    [CascadingParameter(Name = "Admin")]
+    private ApplicationUser? Admin { get; set; }
+    
     private string? AdminId { get; set; }
+    private SignUpApproval SignUpApprovalModel { get; set; } = default!;
     private string? message;
     protected override async Task OnInitializedAsync()
     {
         SignUpApprovalModel ??= new ();
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        Admin = await UserManager.GetUserAsync(authState.User);
         if (Admin is not null) AdminId = Admin.Id;
     }
 
@@ -105,36 +107,24 @@ else
 
         try
         {
-            await using var db = await DbFactory.CreateDbContextAsync();
-            // Entity
-            var request = await db.SignUpRequests.SingleOrDefaultAsync(r => r.Id == DoctorId);
+            var requests = await SignUpService.GetSignUpRequests(DoctorId);
+            if (requests is null) return;
             
             // Alter column and change status from 'pending' to 'approved'
-            if (request is null)
-            {
-                message = "Sign up request not found";
-                return;
-            }
-            request.Status = "approved";
-            request.ReviewedBy = AdminId;
-            request.LastReviewed = DateTime.UtcNow;
+            await SignUpService.UpdateStatus("Approved", requests, AdminId!, null);
 
             // Creates a record in Medicos_Funciones table
-            var funciones = new Medicos_Funciones
-            {
-            Id = Guid.CreateVersion7().ToString(),
-            MedicoId = DoctorId,
-            Grupo_I = SignUpApprovalModel.Grupo_I,
-            Grupo_II = SignUpApprovalModel.Grupo_II,
-            Grupo_III = SignUpApprovalModel.Grupo_III,
-            Grupo_IV = SignUpApprovalModel.Grupo_IV,
-            Grupo_V = SignUpApprovalModel.Grupo_V,
-            Grupo_VI = SignUpApprovalModel.Grupo_VI  
-            };
-            db.Medicos_Funciones.Add(funciones);
-
-            // Save db changes
-            await db.SaveChangesAsync();
+            var id = Guid.CreateVersion7();
+            await SignUpService.CreateFnRecord(
+                id.ToString(),
+                DoctorId,
+                SignUpApprovalModel.Grupo_I,
+                SignUpApprovalModel.Grupo_II,
+                SignUpApprovalModel.Grupo_III,
+                SignUpApprovalModel.Grupo_IV,
+                SignUpApprovalModel.Grupo_V,
+                SignUpApprovalModel.Grupo_VI
+            );
 
             // Send email confirmation
             await Sender.SendApprovedSignUpConfirmation(Email);

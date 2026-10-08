@@ -1,11 +1,14 @@
 @page "/Dashboard"
 
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using neurosintergia.Data
 @using neurosintergia.Data.Models
 
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
 
 @attribute [Authorize]
 
@@ -18,13 +21,17 @@
     }
     else
     {
-        <PendingSignUps Requests=@Requests />
+        <CascadingValue Value="@Admin">
+            <PendingSignUps Requests=@Requests />
+        </CascadingValue>
     }
 </AuthorizeView>
 
 @code
 {
     private List<PendingSignUpRow>? Requests;
+    private AuthenticationState? AuthState { get; set; }
+    private ApplicationUser? Admin { get; set; }
     protected override async Task OnInitializedAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
@@ -55,5 +62,8 @@
             )
         )
         .ToListAsync();
+
+        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        Admin = await UserManager.GetUserAsync(AuthState.User);
     }
 }

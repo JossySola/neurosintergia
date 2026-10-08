@@ -6,11 +6,11 @@
     {
         if (Action.ToUpper() == "APPROVE")
         {
-            <SignUpApprovalForm />
+            <SignUpApprovalForm DoctorId="@DoctorId" Email="@Email" />
         }
         else
         {
-            <SignUpDeclineForm />
+            <SignUpDeclineForm DoctorId="@DoctorId" Email="@Email" />
         }
     }
     <button commandfor="@ModalId" command="close">Close</button>
@@ -19,7 +19,7 @@
 @code 
 {
     [Parameter]
-    public required string ModalId { get; set; } 
+    public required Guid ModalId { get; set; } 
     [Parameter]
     public required string Action { get; set; }
     [Parameter]
