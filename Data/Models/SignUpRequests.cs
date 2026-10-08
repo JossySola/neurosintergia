@@ -12,6 +12,8 @@ public class SignUpRequests
     public string? ReviewedBy { get; set; }
     public string? Comment { get; set; }
     public DateTime? LastReviewed { get; set; }
+    public string? Token { get; set; }
+    public DateTime? Token_Created_At { get; set; }
 }
 
 public sealed record PendingSignUpRow (

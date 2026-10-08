@@ -5,7 +5,7 @@ namespace neurosintergia.Data.Models;
 public class Recetas
 {
     [Key]
-    public required string Id { get; set; }
+    public required Guid Id { get; set; }
     public required string MedicoId { get; set; }
     public required string PacienteId { get; set; }
     public required DateTime Created_At { get; set; }
