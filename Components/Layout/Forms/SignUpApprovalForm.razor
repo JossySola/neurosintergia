@@ -71,7 +71,7 @@ else
     [Parameter]
     public required string Email { get; set; }
 
-    [CascadingParameter(Name = "Admin")]
+    [CascadingParameter(Name = "User")]
     private ApplicationUser? Admin { get; set; }
     
     private string? AdminId { get; set; }

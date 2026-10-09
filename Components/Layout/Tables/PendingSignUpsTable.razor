@@ -1,0 +1,66 @@
+@rendermode InteractiveServer
+
+@using neurosintergia.Components.Layout.Modals
+@using neurosintergia.Data.Models
+
+<section>
+    <table>
+        <caption>Pending doctor sign up requests</caption>
+        <thead>
+            <tr>
+                <th scope="col" rowspan="2">Name</th>
+                <th scope="col" colspan="2">Last Name</th>
+                <th scope="col" rowspan="2">Status</th>
+                <th scope="col" rowspan="2">CURP</th>
+                <th scope="col" rowspan="2">Birth date</th>
+                <th scope="col" rowspan="2">Province</th>
+                <th scope="col" rowspan="2">State</th>
+                <th scope="col" colspan="3">Academic intel</th>
+                <th scope="col" rowspan="2">Sign Up Date</th>
+                <th scope="col" colspan="2">Actions</th>
+            </tr>
+            <tr>
+                <td scope="col">Father Lastname</td>
+                <td scope="col">Mother Lastname</td>
+                <td scope="col">Institute</td>
+                <td scope="col">Ced. Prof.</td>
+                <td scope="col">Ced. Esp.</td>
+                <td scope="col">Approve</td>
+                <td scope="col">Decline</td>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var Request in Requests)
+        {
+            <tr>
+                <th scope="row">@Request.Nombre</th>
+                <td>@Request.ApellidoPaterno</td>
+                <td>@Request.ApellidoMaterno</td>
+                <td>@Request.Status.ToUpper()</td>
+                <td>@Request.CURP</td>
+                <td>@Request.FechaNacimiento</td>
+                <td>@Request.MunicipioNacimiento</td>
+                <td>@Request.EstadoNacimiento</td>
+                @if (Request.Credenciales is not null)
+                {
+                    foreach (var Credencial in Request.Credenciales)
+                    {
+                        <td>@Credencial.Instituto</td>
+                        <td>@Credencial.CedProf</td>
+                        <td>@Credencial.CedEsp</td>        
+                    }
+                }
+                <td><time datetime="@Request.Created_At">@Request.Created_At</time></td>
+                <td><SignUpRequestsModal Action="Approve" DoctorId="@Request.Id" Email="@Request.Email" ModalId="@Guid.CreateVersion7()" /></td>
+                <td><SignUpRequestsModal Action="Decline" DoctorId="@Request.Id" Email="@Request.Email" ModalId="@Guid.CreateVersion7()" /></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</section>
+
+@code 
+{
+    [Parameter]
+    public List<PendingSignUpRow> Requests { get; set; } = new();    
+}
