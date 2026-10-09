@@ -13,12 +13,12 @@ public class DashboardAuthViewsServices(
     private readonly UserManager<ApplicationUser> UserManager = userManager;
     private readonly IDbContextFactory<ApplicationDbContext> ContextFactory = contextFactory;
     
-    public async Task<List<PendingSignUpRow>> GetPendingRequests()
+    public async Task<List<PendingSignUpRow>> GetRequestsByStatus(string status)
     {
         await using var db = await ContextFactory.CreateDbContextAsync();
         List<PendingSignUpRow> requests = await db.SignUpRequests
         .AsNoTracking()
-        .Where(request => request.Status.Equals("pending", StringComparison.CurrentCultureIgnoreCase))
+        .Where(request => request.Status.ToUpper() == status.ToUpper())
         .Join(
             db.Medicos.AsNoTracking(),
             request => request.Id,
@@ -42,5 +42,15 @@ public class DashboardAuthViewsServices(
             )
         ).ToListAsync();
         return requests;
+    }
+    public async Task<string?> GetUserStatus(string UserId)
+    {
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        var result = await db.SignUpRequests
+        .AsNoTracking()
+        .Where(record => record.Id == UserId)
+        .Select(record => record.Status)
+        .SingleOrDefaultAsync();
+        return result;
     }
 }
