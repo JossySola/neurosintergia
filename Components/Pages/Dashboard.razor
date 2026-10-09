@@ -36,9 +36,18 @@
     {
         <p>Checking your account status...</p>
     }
-    @if (UserSignUpStatus is not null && UserSignUpStatus.ToUpper() == "Declined".ToUpper())
+    @if (UserSignUpStatus is not null)
     {
-        
+        if (UserSignUpStatus.ToUpper() == "DECLINED")
+        {
+            
+        } else if (UserSignUpStatus.ToUpper() == "PENDING")
+        {
+            
+        } else
+        {
+            
+        }
     }
 </AuthorizeView>
 
