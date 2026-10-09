@@ -3,67 +3,67 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
+@using neurosintergia.Components.Layout.Tables
 @using neurosintergia.Data
 @using neurosintergia.Data.Models
+@using neurosintergia.Services
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject UserManager<ApplicationUser> UserManager
+@inject DashboardAuthViewsServices AuthViewsService
 
 @attribute [Authorize]
 
 <PageTitle>Dashboard</PageTitle>
 
 <AuthorizeView Roles="SuperAdmin">
-    @if (Requests is null)
+    @if (PendingRequests is null)
     {
         <p>Loading requests...</p>
     }
     else
     {
-        <CascadingValue Value="@Admin">
-            <PendingSignUps Requests=@Requests />
+        <CascadingValue Value="@User">
+            <PendingSignUpsTable Requests=@PendingRequests />
+            <DeclinedSignUpsTable Requests=@DeclinedRequests />
         </CascadingValue>
     }
 </AuthorizeView>
 
+<AuthorizeView Roles="Medico">
+    @if (User is null)
+    {
+        <p>Checking your account status...</p>
+    }
+    @if (UserSignUpStatus is not null && UserSignUpStatus.ToUpper() == "Declined".ToUpper())
+    {
+        
+    }
+    </AuthorizeView>
+
 @code
 {
-    private List<PendingSignUpRow>? Requests;
     private AuthenticationState? AuthState { get; set; }
-    private ApplicationUser? Admin { get; set; }
+    private ApplicationUser? User { get; set; }
+
+    private List<PendingSignUpRow>? PendingRequests { get; set; }
+    private List<PendingSignUpRow>? DeclinedRequests { get; set; }
+
+    private string? UserSignUpStatus { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        await using var db = await DbFactory.CreateDbContextAsync();
-
-        Requests = await db.SignUpRequests
-        .AsNoTracking()
-        .Where(request => request.Status.ToUpper() == "pending".ToUpper())
-        .Join(
-            db.Medicos.AsNoTracking(),
-            request => request.Id,
-            medico => medico.Id,
-            (request, medico) => new PendingSignUpRow(
-                request.Id,
-                request.Created_At,
-                request.Status,
-                request.ReviewedBy,
-                request.Comment,
-                request.LastReviewed,
-                medico.Nombre,
-                medico.ApellidoPaterno,
-                medico.ApellidoMaterno,
-                medico.FechaNacimiento,
-                medico.CURP,
-                medico.MunicipioNacimiento,
-                medico.EstadoNacimiento,
-                medico.Email,
-                medico.Credenciales
-            )
-        )
-        .ToListAsync();
-
+        // Get current signed in user
         AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        Admin = await UserManager.GetUserAsync(AuthState.User);
+        User = await UserManager.GetUserAsync(AuthState.User);
+
+        // For SuperAdmin AuthorizeView
+        PendingRequests = await AuthViewsService.GetRequestsByStatus("Pending");
+        DeclinedRequests = await AuthViewsService.GetRequestsByStatus("Declined");
+
+        // For Doctor AuthorizeView
+        if (User is not null) UserSignUpStatus = await AuthViewsService.GetUserStatus(User.Id);
+
     }
 }
