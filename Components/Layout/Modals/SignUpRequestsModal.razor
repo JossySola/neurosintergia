@@ -7,11 +7,11 @@
     {
         if (Action.ToUpper() == "APPROVE")
         {
-            <SignUpApprovalForm DoctorId="@DoctorId" Email="@Email" />
+            <SignUpApprovalForm DoctorId="@DoctorId" Email="@Email" AdminId="@AdminId" />
         }
         else
         {
-            <SignUpDeclineForm DoctorId="@DoctorId" Email="@Email" />
+            <SignUpDeclineForm DoctorId="@DoctorId" Email="@Email" AdminId="@AdminId" />
         }
     }
     <button commandfor="@ModalId" command="close">Close</button>
@@ -27,4 +27,6 @@
     public required string DoctorId { get; set; }
     [Parameter]
     public required string Email { get; set; }
+    [Parameter]
+    public string? AdminId { get; set; }
 }

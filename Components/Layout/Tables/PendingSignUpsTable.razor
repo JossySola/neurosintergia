@@ -51,8 +51,8 @@
                     }
                 }
                 <td><time datetime="@Request.Created_At">@Request.Created_At</time></td>
-                <td><SignUpRequestsModal Action="Approve" DoctorId="@Request.Id" Email="@Request.Email" ModalId="@Guid.CreateVersion7()" /></td>
-                <td><SignUpRequestsModal Action="Decline" DoctorId="@Request.Id" Email="@Request.Email" ModalId="@Guid.CreateVersion7()" /></td>
+                <td><SignUpRequestsModal Action="Approve" DoctorId="@Request.Id" Email="@Request.Email" AdminId="@AdminId" ModalId="@Guid.CreateVersion7()" /></td>
+                <td><SignUpRequestsModal Action="Decline" DoctorId="@Request.Id" Email="@Request.Email" AdminId="@AdminId" ModalId="@Guid.CreateVersion7()" /></td>
             </tr>
         }
         </tbody>
@@ -62,5 +62,7 @@
 @code 
 {
     [Parameter]
-    public List<PendingSignUpRow> Requests { get; set; } = new();    
+    public List<PendingSignUpRow> Requests { get; set; } = new();
+    [Parameter]
+    public string? AdminId { get; set; }
 }

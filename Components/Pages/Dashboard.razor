@@ -30,10 +30,8 @@
     }
     else
     {
-        <CascadingValue Name="User" Value="@User">
-            <PendingSignUpsTable Requests=@PendingRequests />
-            <DeclinedSignUpsTable Requests=@DeclinedRequests />
-        </CascadingValue>
+        <PendingSignUpsTable Requests=@PendingRequests AdminId="@User?.Id" />
+        <DeclinedSignUpsTable Requests=@DeclinedRequests AdminId="@User?.Id" />
     }
 </AuthorizeView>
 

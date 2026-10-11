@@ -68,8 +68,8 @@ else
     [Parameter]
     public required string Email { get; set; }
 
-    [CascadingParameter(Name = "User")]
-    private ApplicationUser? Admin { get; set; }
+    [Parameter]
+    public string? AdminId { get; set; }
 
     private SignUpApproval SignUpApprovalModel { get; set; } = default!;
     private string? message;
@@ -82,9 +82,17 @@ else
     {
         try
         {
-            if (Admin is null)
+            if (string.IsNullOrWhiteSpace(AdminId))
             {
                 throw new InvalidOperationException("The signed-in administrator could not be identified.");
+            }
+
+            // Load the admin only on submission. The table creates multiple hidden
+            // dialogs, so loading a user in every dialog can overlap Identity's DbContext.
+            var admin = await UserManager.FindByIdAsync(AdminId);
+            if (admin is null)
+            {
+                throw new InvalidOperationException("The signed-in administrator could not be found.");
             }
 
             var authenticatorCode = SignUpApprovalModel.Code
@@ -92,7 +100,7 @@ else
                 .Replace("-", string.Empty);
 
             var isValid = await UserManager.VerifyTwoFactorTokenAsync(
-                Admin, 
+                admin, 
                 UserManager.Options.Tokens.AuthenticatorTokenProvider, 
                 authenticatorCode
             );
@@ -100,14 +108,14 @@ else
             // Validate Authenticator code
             if (!isValid)
             {
-                Logger.LogWarning("Invalid authenticator code provided by admin {AdminId}", Admin.Id);
+                Logger.LogWarning("Invalid authenticator code provided by admin {AdminId}", admin.Id);
                 message = "The authenticator code is invalid.";
                 return;
             }
 
             await SignUpService.ApproveRequest(
                 DoctorId,
-                Admin.Id,
+                admin.Id,
                 SignUpApprovalModel.Grupo_I,
                 SignUpApprovalModel.Grupo_II,
                 SignUpApprovalModel.Grupo_III,
