@@ -6,45 +6,78 @@ namespace neurosintergia.Services;
 
 public class SignUpRequestsServices(IDbContextFactory<ApplicationDbContext> factory)
 {
-    public async Task<SignUpRequests?> GetSignUpRequests(string DoctorId)
+    public async Task<SignUpRequests?> GetSignUpRequests(string doctorId)
     {
-        using var context = factory.CreateDbContext();
-        var request = await context.SignUpRequests.SingleOrDefaultAsync(record => record.Id == DoctorId);
-        if (request is null) return null;
-        return request;
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.SignUpRequests
+        .AsNoTracking()
+        .SingleOrDefaultAsync(record => record.Id == doctorId);
     }
-    public async Task UpdateStatus(string Status, SignUpRequests Requests, string AdminId, string? Comment)
+
+    public async Task UpdateStatus(string status, string doctorId, string adminId, string? comment)
     {
-        using var context = factory.CreateDbContext();
-        Requests.Status = Status;
-        Requests.ReviewedBy = AdminId;
-        Requests.LastReviewed = DateTime.UtcNow;
-        Requests.Comment = Comment ?? "";
+        await using var context = await factory.CreateDbContextAsync();
+        var request = await context.SignUpRequests
+        .SingleOrDefaultAsync(record => record.Id == doctorId)
+        ?? throw new InvalidOperationException($"Signup request '{doctorId}' was not found.");
+
+        request.Status = status;
+        request.ReviewedBy = adminId;
+        request.LastReviewed = DateTime.UtcNow;
+        request.Comment = comment ?? "";
+
         await context.SaveChangesAsync();
     }
-    public async Task CreateFnRecord(
-        string Id,
-        string MedicoId,
-        bool Grupo_I,
-        bool Grupo_II,
-        bool Grupo_III,
-        bool Grupo_IV,
-        bool Grupo_V,
-        bool Grupo_VI
-    )
+
+    public async Task ApproveRequest(
+        string doctorId,
+        string adminId,
+        bool grupoI,
+        bool grupoII,
+        bool grupoIII,
+        bool grupoIV,
+        bool grupoV,
+        bool grupoVI)
     {
-        using var context = factory.CreateDbContext();
-        var fn = new Medicos_Funciones
+        await using var context = await factory.CreateDbContextAsync();
+        var request = await context.SignUpRequests
+        .SingleOrDefaultAsync(record => record.Id == doctorId)
+        ?? throw new InvalidOperationException($"Signup request '{doctorId}' was not found.");
+
+        var functionRecord = await context.Medicos_Funciones
+        .SingleOrDefaultAsync(record => record.MedicoId == doctorId);
+
+        if (functionRecord is null)
         {
-            Id = Id,
-            MedicoId = MedicoId,
-            Grupo_I = Grupo_I,
-            Grupo_II = Grupo_II,
-            Grupo_III = Grupo_III,
-            Grupo_IV = Grupo_IV,
-            Grupo_V = Grupo_V,
-            Grupo_VI = Grupo_VI
-        };
+            functionRecord = new Medicos_Funciones
+            {
+                Id = Guid.CreateVersion7().ToString(),
+                MedicoId = doctorId
+            };
+            context.Medicos_Funciones.Add(functionRecord);
+        }
+
+        functionRecord.Grupo_I = grupoI;
+        functionRecord.Grupo_II = grupoII;
+        functionRecord.Grupo_III = grupoIII;
+        functionRecord.Grupo_IV = grupoIV;
+        functionRecord.Grupo_V = grupoV;
+        functionRecord.Grupo_VI = grupoVI;
+
+        request.Status = "Approved";
+        request.ReviewedBy = adminId;
+        request.LastReviewed = DateTime.UtcNow;
+        request.Comment = "";
+
+        // EF Core saves both changes in one transaction for relational providers.
         await context.SaveChangesAsync();
+    }
+
+    public async Task<int> DeleteFnRecord(string doctorId)
+    {
+        await using var context = await factory.CreateDbContextAsync();
+        return await context.Medicos_Funciones
+        .Where(record => record.MedicoId == doctorId)
+        .ExecuteDeleteAsync();
     }
 }

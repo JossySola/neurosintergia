@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using neurosintergia.Data;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 
 namespace neurosintergia.Services;
 
@@ -15,7 +16,8 @@ public interface IUserProfile
 public class AuthFlowService(
     UserManager<ApplicationUser> userManager,
     IDbContextFactory<ApplicationDbContext> contextFactory,
-    HttpClient httpClient
+    HttpClient httpClient,
+    ILogger<DashboardAuthViewsServices> logger
 )
 {
     private readonly UserManager<ApplicationUser> UserManager = userManager;
@@ -29,8 +31,17 @@ public class AuthFlowService(
         where TProfile : class, IUserProfile
     {
         // Set values for ASP.NET database tables
-        await UserManager.SetUserNameAsync(user, email);
-        await UserManager.SetEmailAsync(user, email);
+        var usernameResult = await UserManager.SetUserNameAsync(user, email);
+        if (!usernameResult.Succeeded)
+        {
+            return usernameResult;
+        }
+
+        var emailResult = await UserManager.SetEmailAsync(user, email);
+        if (!emailResult.Succeeded)
+        {
+            return emailResult;
+        }
         var result = await UserManager.CreateAsync(user);
         if (!result.Succeeded)
         {
@@ -52,8 +63,9 @@ public class AuthFlowService(
             await context.SaveChangesAsync();
             return IdentityResult.Success;
         }
-        catch (System.Exception)
+        catch (Exception error)
         {
+            logger.LogError(error, "Failed signing up");
             await UserManager.DeleteAsync(user);
             throw;
         }
@@ -69,8 +81,8 @@ public class AuthFlowService(
         var verificationCode = code.Replace(" ", string.Empty).Replace("-", string.Empty);
         var is2faTokenValid = await UserManager.VerifyTwoFactorTokenAsync(user, UserManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
         if (!is2faTokenValid) return false;
-        await UserManager.SetTwoFactorEnabledAsync(user, true);
-        return true;
+        var result = await UserManager.SetTwoFactorEnabledAsync(user, true);
+        return result.Succeeded;
     }
     public async Task<IdentityResult> SetPassword(string password, ApplicationUser user)
     {

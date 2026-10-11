@@ -186,6 +186,7 @@
         else
         {
             message = "El código que ingresaste es inválido";
+            return;
         }
 
         if (await UserManager.CountRecoveryCodesAsync(user) == 0)
@@ -205,16 +206,29 @@
             return;
         }
 
-        var result = await ServiceInstance.SetPassword(PasswordInput.Password, user);
-        if (!result.Succeeded)
+        try
         {
-            statusMessage = $"Error: {string.Join(", ", result.Errors.Select(error => error.Description))}";
-            return;
-        }
+            var result = await ServiceInstance.SetPassword(PasswordInput.Password, user);
+            if (!result.Succeeded)
+            {
+                statusMessage = $"Error: {string.Join(", ", result.Errors.Select(error => error.Description))}";
+                return;
+            }
 
-        passwordIsSet = true;
-        statusMessage = "Tu contraseña ha sido configurada.";
-        await LoadSharedKeyAndQrCodeUriAsync(user);
+            passwordIsSet = true;
+            statusMessage = "Tu contraseña ha sido configurada.";
+            await LoadSharedKeyAndQrCodeUriAsync(user);
+        }
+        catch (HttpRequestException error)
+        {
+            Logger.LogError(error, "The breached-password check failed while setting a password for user {UserId}", user.Id);
+            statusMessage = "No se pudo comprobar la contraseña en este momento. Inténtalo de nuevo.";
+        }
+        catch (TaskCanceledException error)
+        {
+            Logger.LogError(error, "The breached-password check timed out while setting a password for user {UserId}", user.Id);
+            statusMessage = "La comprobación de seguridad tardó demasiado. Inténtalo de nuevo.";
+        }
     }
     private async ValueTask LoadSharedKeyAndQrCodeUriAsync(ApplicationUser user)
     {

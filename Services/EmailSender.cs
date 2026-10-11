@@ -43,13 +43,26 @@ public class EmailSender(IResend resend)
     }
     public async Task<ResendResponse> SendDeniedSignUpEmail(string email, string reason, string field)
     {
+        var encodedReason = HtmlEncoder.Default.Encode(reason);
+        var encodedField = HtmlEncoder.Default.Encode(field);
         var message = new EmailMessage
         {
             From = "no-reply@jossysola.com",
             Subject = "Neurosintergia: Pending sign up process",
-            HtmlBody = $"<p>There is information in your sign up process to be revised. The reason being: {reason} specifically in {field}.</p>"
+            HtmlBody = $"<p>There is information in your sign up process to be revised. The reason being: {encodedReason} specifically in {encodedField}.</p>"
         };
         message.To.Add(email);
+        return await _resend.EmailSendAsync(message);
+    }
+    public async Task<ResendResponse> NotifyNewDoctorRequest()
+    {
+        var message = new EmailMessage
+        {
+            From = "no-reply@jossysola.com",
+            Subject = "Neurosintergia: New revised doctor request pending",
+            HtmlBody = "<p>There is a new revised doctor request ready.</p>"
+        };
+        message.To.Add("contact@jossysola.com");
         return await _resend.EmailSendAsync(message);
     }
 }

@@ -1,21 +1,18 @@
 @rendermode InteractiveServer
 
-@using Microsoft.AspNetCore.Identity
-@using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
 @using neurosintergia.Components.Account.Shared
 @using neurosintergia.Data
 @using neurosintergia.Services
 
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<ApplicationUser> UserManager
-@inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject EmailSender Sender
 @inject SignUpRequestsServices SignUpService
+@inject ILogger<SignUpDeclineForm> Logger
 
 @if (SignUpDenialModel is not null)
 {
     <StatusMessage Message="@message" />
-    <EditForm Model="SignUpDenialModel" FormName="signup-denial">
+    <EditForm Model="SignUpDenialModel" OnValidSubmit="OnValidSubmitAsync" FormName="signup-denial">
         <DataAnnotationsValidator />
         <label>
             Reason for denial:
@@ -40,6 +37,7 @@
                 </option>
             </InputSelect>
         </label>
+        <ValidationMessage For="@(() => SignUpDenialModel.Reason)" />
         <label>
             Specific malformed input:
             <InputSelect @bind-Value="SignUpDenialModel.InvalidInput">
@@ -75,10 +73,12 @@
                 </option>
             </InputSelect>
         </label>
+        <ValidationMessage For="@(() => SignUpDenialModel.InvalidInput)" />
         <label>
             Comments:
             <InputTextArea @bind-Value="SignUpDenialModel.Comment" />
         </label>
+        <button type="submit">Decline</button>
     </EditForm> 
 }
 else
@@ -97,35 +97,59 @@ else
     [CascadingParameter(Name = "User")]
     private ApplicationUser? Admin { get; set; }
 
-    private string? AdminId { get; set; }
     private string message = "";
     private SignUpDenial? SignUpDenialModel { get; set; } = default!;
     protected override async Task OnInitializedAsync()
     {
         SignUpDenialModel ??= new();
-        if (Admin is not null) AdminId = Admin.Id;
     }
     private async Task OnValidSubmitAsync()
     {
-        if (Admin is null) return;
+        if (Admin is null)
+        {
+            Logger.LogError("Could not identify the administrator while declining doctor {DoctorId}", DoctorId);
+            message = "The signed-in administrator could not be identified.";
+            return;
+        }
+
         try
         {
-            var Requests = await SignUpService.GetSignUpRequests(DoctorId);
-            if (Requests is null) return;
-            // Alter column and change status from 'pending' to 'declined'
-            await SignUpService.UpdateStatus("Declined", Requests, AdminId!, SignUpDenialModel!.Comment);
-
-            // Send notification email
-            await Sender.SendDeniedSignUpEmail(Email, SignUpDenialModel!.Reason, SignUpDenialModel!.InvalidInput);
+            await SignUpService.UpdateStatus("Declined", DoctorId, Admin.Id, SignUpDenialModel!.Comment);
         }
         catch (Exception error)
         {
-            message = error.ToString();
+            Logger.LogError(error, "Failed to save decline for doctor {DoctorId}", DoctorId);
+            message = "The decline could not be saved. Check the application logs for details.";
+            return;
+        }
+
+        try
+        {
+            var emailIsSent = await Sender.SendDeniedSignUpEmail(
+                Email,
+                SignUpDenialModel!.Reason,
+                SignUpDenialModel!.InvalidInput);
+
+            if (!emailIsSent.Success)
+            {
+                Logger.LogError("Doctor {DoctorId} was declined, but the notification email was not sent", DoctorId);
+                message = "The request was declined, but the notification email could not be sent.";
+                return;
+            }
+
+            message = "Signup request declined.";
+        }
+        catch (Exception error)
+        {
+            Logger.LogError(error, "Doctor {DoctorId} was declined, but sending the notification email failed", DoctorId);
+            message = "The request was declined, but the notification email could not be sent.";
         }
     }
     private sealed class SignUpDenial
     {
+        [Required(ErrorMessage = "Select a reason for denial.")]
         public string Reason { get; set; } = "";
+        [Required(ErrorMessage = "Select the malformed input.")]
         public string InvalidInput { get; set; } = "";
         public string Comment { get; set; } = "";
     }

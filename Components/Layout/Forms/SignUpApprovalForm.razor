@@ -2,15 +2,12 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.EntityFrameworkCore
 @using neurosintergia.Components.Account.Shared
 @using neurosintergia.Data
 @using neurosintergia.Services
 
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject ILogger<SignUpApprovalForm> Logger
-@inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject EmailSender Sender
 @inject SignUpRequestsServices SignUpService
 
@@ -73,51 +70,44 @@ else
 
     [CascadingParameter(Name = "User")]
     private ApplicationUser? Admin { get; set; }
-    
-    private string? AdminId { get; set; }
+
     private SignUpApproval SignUpApprovalModel { get; set; } = default!;
     private string? message;
     protected override async Task OnInitializedAsync()
     {
         SignUpApprovalModel ??= new ();
-        if (Admin is not null) AdminId = Admin.Id;
     }
 
     private async Task OnValidSubmitAsync()
     {
-        if (Admin is null) return;
-
-        var authenticatorCode = SignUpApprovalModel.Code
-        .Replace("", string.Empty)
-        .Replace("-", string.Empty);
-
-        var isValid = await UserManager.VerifyTwoFactorTokenAsync(
-            Admin, 
-            UserManager.Options.Tokens.AuthenticatorTokenProvider, 
-            SignUpApprovalModel.Code
-        );
-
-        if (!isValid)
-        {
-            Logger.LogWarning("Invalid Authentication Code");
-            message = "Invalid Authentication Code";
-            // Show a validation error; do not approve.
-            return;
-        }
-
         try
         {
-            var requests = await SignUpService.GetSignUpRequests(DoctorId);
-            if (requests is null) return;
-            
-            // Alter column and change status from 'pending' to 'approved'
-            await SignUpService.UpdateStatus("Approved", requests, AdminId!, null);
+            if (Admin is null)
+            {
+                throw new InvalidOperationException("The signed-in administrator could not be identified.");
+            }
 
-            // Creates a record in Medicos_Funciones table
-            var id = Guid.CreateVersion7();
-            await SignUpService.CreateFnRecord(
-                id.ToString(),
+            var authenticatorCode = SignUpApprovalModel.Code
+                .Replace(" ", string.Empty)
+                .Replace("-", string.Empty);
+
+            var isValid = await UserManager.VerifyTwoFactorTokenAsync(
+                Admin, 
+                UserManager.Options.Tokens.AuthenticatorTokenProvider, 
+                authenticatorCode
+            );
+
+            // Validate Authenticator code
+            if (!isValid)
+            {
+                Logger.LogWarning("Invalid authenticator code provided by admin {AdminId}", Admin.Id);
+                message = "The authenticator code is invalid.";
+                return;
+            }
+
+            await SignUpService.ApproveRequest(
                 DoctorId,
+                Admin.Id,
                 SignUpApprovalModel.Grupo_I,
                 SignUpApprovalModel.Grupo_II,
                 SignUpApprovalModel.Grupo_III,
@@ -125,13 +115,30 @@ else
                 SignUpApprovalModel.Grupo_V,
                 SignUpApprovalModel.Grupo_VI
             );
-
-            // Send email confirmation
-            await Sender.SendApprovedSignUpConfirmation(Email);
         }
-        catch(Exception error)
+        catch (Exception error)
         {
-            message = error.ToString();
+            Logger.LogError(error, "Failed to approve signup request for doctor {DoctorId}", DoctorId);
+            message = "Approval could not be saved. Check the application logs for details.";
+            return;
+        }
+
+        try
+        {
+            var emailIsSent = await Sender.SendApprovedSignUpConfirmation(Email);
+            if (!emailIsSent.Success)
+            {
+                Logger.LogError("Doctor {DoctorId} was approved, but the confirmation email was not sent", DoctorId);
+                message = "The doctor was approved, but the confirmation email could not be sent.";
+                return;
+            }
+
+            message = "Signup request approved.";
+        }
+        catch (Exception error)
+        {
+            Logger.LogError(error, "Doctor {DoctorId} was approved, but sending the confirmation email failed", DoctorId);
+            message = "The doctor was approved, but the confirmation email could not be sent.";
         }
     }
 

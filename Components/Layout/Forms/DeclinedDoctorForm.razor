@@ -1,0 +1,206 @@
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using neurosintergia.Components.Account.Shared
+@using Microsoft.Extensions.Logging
+@using neurosintergia.Data
+@using neurosintergia.Data.Static
+@using neurosintergia.Services
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject DashboardAuthViewsServices AuthViewsService
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<DeclinedDoctorForm> Logger
+@inject EmailSender Sender
+
+@if (FormModel == null)
+{
+    <p>Preparando nuevo registro...</p>
+}
+else if (isEmailSent)
+{
+    <p>Las correcciones han sido enviadas. La próxima revisión tardará entre 24 a 42 horas.</p>
+}
+else
+{
+    <StatusMessage Message="@message" />
+    <EditForm Model="FormModel" OnValidSubmit="OnValidSubmitAsync" FormName="RegisterDoctor" method="post">
+        <DataAnnotationsValidator />
+        <ValidationSummary role="alert" />
+        <fieldset>
+            <legend>Información general</legend>
+            <label for="nombre">Nombre:</label>
+            <InputText @bind-Value="FormModel.Nombre" id="nombre" min="3" autocomplete="name" required />
+
+            <label for="apellido-paterno">Apellido paterno:</label>
+            <InputText @bind-Value="FormModel.ApellidoPaterno" id="apellido-paterno" min="3" autocomplete="family-name" required />
+
+            <label for="apellido-materno">Apellido materno:</label>
+            <InputText @bind-Value="FormModel.ApellidoMaterno" id="apellido-materno" min="3" />
+
+            <label for="fecha-nacimiento">Fecha de nacimiento:</label>
+            <InputDate @bind-Value="FormModel.FechaNacimiento" id="fecha-nacimiento" required />
+
+            <label for="curp">CURP:</label>
+            <InputText @bind-Value="FormModel.CURP" id="curp" required />
+
+            <label for="estado">Estado de Nacimiento:</label>
+            <InputSelect @bind-Value="FormModel.EstadoNacimiento" id="estado" required>
+                @foreach (var Estado in Ubicaciones.Estados) 
+                {
+                    <option value="@Estado.Nombre">@Estado.Nombre</option>
+                }
+            </InputSelect>
+
+            <label for="municipio">Municipio de Nacimiento:</label>
+            <InputSelect @bind-Value="FormModel.MunicipioNacimiento" id="municipio" disabled="@(string.IsNullOrEmpty(FormModel.EstadoNacimiento))" required>
+                <option value="">--Selecciona una opción--</option>
+                @foreach (var Estado in Ubicaciones.Estados)
+                {
+                    if (Estado.Nombre == FormModel.EstadoNacimiento)
+                    {
+                        foreach (var Municipio in Estado.Municipios)
+                        {
+                            <option value="@Municipio">@Municipio</option>
+                        }
+                    }
+                }
+            </InputSelect>
+        </fieldset>
+
+        <fieldset disabled="@isSubmitting">
+            <legend>Información académica</legend>
+            <ul>
+                @foreach (var credencial in FormModel.Credenciales)
+                {
+                    <li @key="credencial.Id">
+                        <label for="instituto-@credencial.Id">Instituto:</label>
+                        <InputText @bind-Value="credencial.Instituto" id="@($"instituto-{credencial.Id}")" />
+
+                        <label for="titulo-@credencial.Id">Título:</label>
+                        <InputText @bind-Value="credencial.Titulo" id="@($"titulo-{credencial.Id}")" />
+
+                        <label for="cedprof-@credencial.Id">Cédula profesional:</label>
+                        <InputText @bind-Value="credencial.CedProf" id="@($"cedprof-{credencial.Id}")" />
+
+                        <label for="cedesp-@credencial.Id">Cédula de especialidad:</label>
+                        <InputText @bind-Value="credencial.CedEsp" id="@($"cedesp-{credencial.Id}")" />
+
+                        <label for="ssa-@credencial.Id">SSA:</label>
+                        <InputText @bind-Value="credencial.SSA" id="@($"ssa-{credencial.Id}")" />
+
+                        <button type="button" @onclick="() => RemoveCredencial(credencial)">Eliminar título</button>
+                    </li>
+                }
+            </ul>
+            <button type="button" @onclick="AddCredencial">Agregar título</button>
+        </fieldset>
+
+        <button type="submit" disabled=@isSubmitting>
+            Enviar
+        </button>
+    </EditForm>
+}
+
+@code 
+{
+    [SupplyParameterFromForm(FormName = "RegisterDoctor")]
+    private FormInputModel? FormModel { get; set; }
+    private bool isSubmitting = false;
+    private bool isEmailSent = false;
+    private string message = "";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        FormModel ??= new();
+    }
+    private void AddCredencial()
+    {
+        FormModel!.Credenciales.Add(new CredencialInputModel());
+    }
+
+    private void RemoveCredencial(CredencialInputModel credencial)
+    {
+        FormModel!.Credenciales.Remove(credencial);
+    }
+    protected async Task OnValidSubmitAsync()
+    {
+        try
+        {
+            isSubmitting = true;
+            var AuthState = await  AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var CurrentUser = await UserManager.GetUserAsync(AuthState.User);
+
+            if (CurrentUser is null)
+            {
+                throw new InvalidOperationException("User session is null");
+            }
+
+            var notification = await Sender.NotifyNewDoctorRequest();
+            if (!notification.Success)
+            {
+                Logger.LogError("Failed to notify an administrator about revised doctor information for {DoctorId}", CurrentUser.Id);
+                message = "The administrator could not be notified. Your changes have not been submitted.";
+                return;
+            }
+
+            message = "The administrator was notified, but your changes have not been submitted yet.";
+        }
+        catch (Exception error)
+        {
+            Logger.LogError(error, "Failed to process revised doctor information");
+            message = "The request could not be processed. Check the application logs for details.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private sealed class FormInputModel
+    {
+        [Required(ErrorMessage = "El nombre es requerido")]
+        [MinLength(3, ErrorMessage = "El nombre debe tener un mínimo de 3 caracteres")]
+        public string Nombre { get; set; } = "";
+
+        [Required(ErrorMessage = "El apellido paterno es requerido")]
+        [MinLength(3, ErrorMessage = "El apellido paterno debe tener un mínimo de 3 caracteres")]
+        public string ApellidoPaterno { get; set; } = "";
+
+        public string ApellidoMaterno { get; set; } = "";
+
+        [Required(ErrorMessage = "La fecha de nacimiento es requerida")]
+        public DateOnly FechaNacimiento { get; set; }
+
+        [Required(ErrorMessage = "El CURP es requerido")]
+        [Length(18, 18, ErrorMessage = "El CURP debe tener 18 dígitos")]
+        public string CURP { get; set; } = "";
+
+        [Required(ErrorMessage = "El municipio de nacimiento es requerido")]
+        public string MunicipioNacimiento { get; set; } = "";
+
+        [Required(ErrorMessage = "El estado de nacimiento es requerido")]
+        public string EstadoNacimiento { get; set; } = "";
+
+        public List<CredencialInputModel> Credenciales { get; set; } = [];
+    }
+
+    private sealed class CredencialInputModel
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        [Required(ErrorMessage = "El nombre oficial de la institución es requerida")]
+        public string Instituto { get; set; } = "";
+        [Required(ErrorMessage = "El título universitario es requerido")]
+        public string Titulo { get; set; } = "";
+        [Length(7,8, ErrorMessage = "Verifica el número de caracteres de la cédula profesional")]
+        public string CedProf { get; set; } = "";
+        [Length(7,8, ErrorMessage = "Verifica el número de caracteres de la cédula de especialidad")]
+        public string CedEsp { get; set; } = "";
+        [Length(8,9, ErrorMessage = "Verifica el número de caracteres del SSA")]
+        public string SSA { get; set; } = "";
+    }
+}

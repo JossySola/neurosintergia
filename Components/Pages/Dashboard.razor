@@ -2,29 +2,35 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.EntityFrameworkCore
+@using neurosintergia.Components.Layout.Forms
 @using neurosintergia.Components.Layout.Tables
+@using neurosintergia.Components.Account.Shared
 @using neurosintergia.Data
 @using neurosintergia.Data.Models
 @using neurosintergia.Services
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject UserManager<ApplicationUser> UserManager
 @inject DashboardAuthViewsServices AuthViewsService
+@inject ILogger<Dashboard> Logger
 
 @attribute [Authorize]
 
 <PageTitle>Dashboard</PageTitle>
+<StatusMessage Message="@dashboardError" />
 
 <AuthorizeView Roles="SuperAdmin">
-    @if (PendingRequests is null)
+    @if (dashboardError is not null)
+    {
+        <p>Could not load dashboard data. Please try again later.</p>
+    }
+    else if (PendingRequests is null)
     {
         <p>Loading requests...</p>
     }
     else
     {
-        <CascadingValue Value="@User">
+        <CascadingValue Name="User" Value="@User">
             <PendingSignUpsTable Requests=@PendingRequests />
             <DeclinedSignUpsTable Requests=@DeclinedRequests />
         </CascadingValue>
@@ -32,21 +38,25 @@
 </AuthorizeView>
 
 <AuthorizeView Roles="Medico">
-    @if (User is null)
+    @if (dashboardError is not null)
+    {
+        <p>Could not load your account status. Please try again later.</p>
+    }
+    else if (User is null || UserSignUpStatus is null)
     {
         <p>Checking your account status...</p>
     }
-    @if (UserSignUpStatus is not null)
+    else
     {
         if (UserSignUpStatus.ToUpper() == "DECLINED")
         {
-            
+            <DeclinedDoctorForm />
         } else if (UserSignUpStatus.ToUpper() == "PENDING")
         {
-            
+            <p>Tu información está siendo revisada por un administrador y una vez autorizado tu registro, recibirás un email de confirmación.</p>
         } else
         {
-            
+            <p>Doctor's dashboard</p>
         }
     }
 </AuthorizeView>
@@ -60,19 +70,27 @@
     private List<PendingSignUpRow>? DeclinedRequests { get; set; }
 
     private string? UserSignUpStatus { get; set; }
+    private string? dashboardError;
 
     protected override async Task OnInitializedAsync()
     {
-        // Get current signed in user
-        AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        User = await UserManager.GetUserAsync(AuthState.User);
+        try
+        {
+            // Get current signed in user
+            AuthState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            User = await UserManager.GetUserAsync(AuthState.User);
 
-        // For SuperAdmin AuthorizeView
-        PendingRequests = await AuthViewsService.GetRequestsByStatus("Pending");
-        DeclinedRequests = await AuthViewsService.GetRequestsByStatus("Declined");
+            // For SuperAdmin AuthorizeView
+            PendingRequests = await AuthViewsService.GetRequestsByStatus("Pending");
+            DeclinedRequests = await AuthViewsService.GetRequestsByStatus("Declined");
 
-        // For Doctor AuthorizeView
-        if (User is not null) UserSignUpStatus = await AuthViewsService.GetUserStatus(User.Id);
-
+            // For Doctor AuthorizeView
+            if (User is not null) UserSignUpStatus = await AuthViewsService.GetUserStatus(User.Id);
+        }
+        catch (Exception error)
+        {
+            Logger.LogError(error, "Failed to load dashboard data");
+            dashboardError = "Dashboard data could not be loaded.";
+        }
     }
 }
