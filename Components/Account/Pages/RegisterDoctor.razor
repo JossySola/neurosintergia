@@ -1,13 +1,15 @@
 @page "/Account/NewDoctor"
 @rendermode InteractiveServer
 
-@using neurosintergia.Data
-@using neurosintergia.Services
-@using neurosintergia.Data.Static
-@using neurosintergia.Data.Models
-@using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Identity
 @using System.ComponentModel.DataAnnotations
+@using System.Text
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.EntityFrameworkCore
+@using neurosintergia.Data
+@using neurosintergia.Data.Models
+@using neurosintergia.Data.Static
+@using neurosintergia.Services
 
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @inject UserManager<ApplicationUser> UserManager
@@ -23,6 +25,10 @@
 }
 else if (isEmailSent)
 {
+    if (isConfirmationSent)
+    {
+        <p>Se ha enviado un mensaje a tu correo electrónico. Por favor, sigue las instrucciones para completar tu registro.</p>
+    }
     <p>Tu información ha sido enviada para su verificación por parte de un administrador. Recibirás un correo electrónico cuando tu registro haya sido aprobado. Al contrario, si la información enviada es incorrecta, recibirás un correo electrónico con el motivo por el cual la verificación fue rechazada.</p>
 }
 else
@@ -127,6 +133,7 @@ else
     private bool isSubmitting = false;
 
     private bool isEmailSent = false;
+    private bool isConfirmationSent = false;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -187,6 +194,18 @@ else
             {
                 using var context = await ContextFactory.CreateDbContextAsync();
                 var userId = await UserManager.GetUserIdAsync(user);
+
+                // Send email to user for email confirmation and MFA setup
+                var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                    NavigationManager.ToAbsoluteUri("Account/CompleteSignUp").AbsoluteUri,
+                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl }
+                );
+                var emailSent = await EmailSender.ExecuteConfirmation(DoctorModel.Email, callbackUrl);
+                if (emailSent.Success) isConfirmationSent = true;
+
+                // Create record to SignUpRequests table
                 SignUpRequests newSignUp = new()
                 {
                     Created_At = DateTime.Now,
@@ -195,8 +214,10 @@ else
                 };
                 await context.AddAsync(newSignUp);
                 await context.SaveChangesAsync();
+
                 if (IdentityResult.Success.Succeeded) 
                 {
+                    // Send email notification to admin
                     await EmailSender.SendPendingSignUpNotification();
                     isEmailSent = true;
                 }

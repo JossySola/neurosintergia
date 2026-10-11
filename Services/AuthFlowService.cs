@@ -30,18 +30,11 @@ public class AuthFlowService(
         ApplicationUser user)
         where TProfile : class, IUserProfile
     {
-        // Set values for ASP.NET database tables
-        var usernameResult = await UserManager.SetUserNameAsync(user, email);
-        if (!usernameResult.Succeeded)
-        {
-            return usernameResult;
-        }
+        // This user has not been inserted yet, so set these properties directly.
+        // UserManager.SetUserNameAsync/SetEmailAsync persist by updating the store.
+        user.UserName = email;
+        user.Email = email;
 
-        var emailResult = await UserManager.SetEmailAsync(user, email);
-        if (!emailResult.Succeeded)
-        {
-            return emailResult;
-        }
         var result = await UserManager.CreateAsync(user);
         if (!result.Succeeded)
         {
