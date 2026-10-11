@@ -1,5 +1,7 @@
 @page "/Dashboard"
 
+@rendermode InteractiveServer
+
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using neurosintergia.Components.Layout.Forms
@@ -32,6 +34,7 @@
     {
         <PendingSignUpsTable Requests=@PendingRequests AdminId="@User?.Id" />
         <DeclinedSignUpsTable Requests=@DeclinedRequests AdminId="@User?.Id" />
+        <ApprovedSignUpsTable Requests=@ApprovedRequests />
     }
 </AuthorizeView>
 
@@ -66,7 +69,7 @@
 
     private List<PendingSignUpRow>? PendingRequests { get; set; }
     private List<PendingSignUpRow>? DeclinedRequests { get; set; }
-
+    private List<PendingSignUpRow>? ApprovedRequests { get; set; }
     private string? UserSignUpStatus { get; set; }
     private string? dashboardError;
 
@@ -81,7 +84,7 @@
             // For SuperAdmin AuthorizeView
             PendingRequests = await AuthViewsService.GetRequestsByStatus("Pending");
             DeclinedRequests = await AuthViewsService.GetRequestsByStatus("Declined");
-
+            ApprovedRequests = await AuthViewsService.GetRequestsByStatus("Approved");
             // For Doctor AuthorizeView
             if (User is not null) UserSignUpStatus = await AuthViewsService.GetUserStatus(User.Id);
         }
