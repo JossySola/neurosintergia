@@ -17,10 +17,32 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Evoluciones> Evoluciones { get; set; } = default!;
     public DbSet<Exploraciones> Exploraciones { get; set; } = default!;
     public DbSet<Medicos_Funciones> Medicos_Funciones { get; set; } = default!;
-    
+    public DbSet<COFEPRIS_Medicamentos> COFEPRIS_Medicamentos { get; set; } = default!;
+ 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<Recetas>()
+        .Property(r => r.Tratamiento)
+        .HasConversion(
+            value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+            value => JsonSerializer.Deserialize<List<Tratamiento>>(
+                value, (JsonSerializerOptions?)null) ?? new()
+        )
+        .Metadata.SetValueComparer(
+            new ValueComparer<List<Tratamiento>>(
+                (left, right) => JsonSerializer.Serialize(left, (JsonSerializerOptions?)null)
+                == JsonSerializer.Serialize(right, (JsonSerializerOptions?)null),
+                value => JsonSerializer.Serialize(value, (JsonSerializerOptions?)null).GetHashCode(),
+                value => JsonSerializer.Deserialize<List<Tratamiento>>(
+                    JsonSerializer.Serialize(value, (JsonSerializerOptions?)null),
+                    (JsonSerializerOptions?)null) ?? new()
+            )
+        );
+
+        builder.Entity<COFEPRIS_Medicamentos>()
+        .ToTable("COFEPRIS_Medicamentos", table => table.ExcludeFromMigrations());
 
         builder.Entity<SignUpRequests>()
         .HasOne(a => a.User)

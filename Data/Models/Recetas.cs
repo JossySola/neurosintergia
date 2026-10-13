@@ -2,6 +2,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace neurosintergia.Data.Models;
 
+public record Tratamiento(
+    string Medicamento,
+    string Dosis,
+    string Presentacion,
+    string Cantidad,
+    string Frecuencia,
+    string Periodo,
+    bool SinSuspender
+);
 public class Recetas
 {
     [Key]
@@ -9,12 +18,6 @@ public class Recetas
     public required string MedicoId { get; set; }
     public required string PacienteId { get; set; }
     public required DateTime Created_At { get; set; }
-    public required string Medicamento { get; set; }
-    public required string Dosis { get; set; }
-    public required string Presentacion { get; set; }
-    public int Cantidad { get; set; } = 1;
-    public int Frecuencia { get; set; } = 1;
-    public int PeriodoTiempo { get; set; } = 1;
-    public bool SinSuspender { get; set; } = false;
+    public required List<Tratamiento> Tratamiento { get; set; }
     public string? Nota { get; set; }
 }

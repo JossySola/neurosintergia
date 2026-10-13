@@ -306,6 +306,42 @@ namespace neurosintergia.Migrations
                     b.ToTable("Admins");
                 });
 
+            modelBuilder.Entity("neurosintergia.Data.Models.COFEPRIS_Medicamentos", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Dosis")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Fraccion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Medicamento")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Presentaciones")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Rubro")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("COFEPRIS_Medicamentos", null, t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
             modelBuilder.Entity("neurosintergia.Data.Models.Credenciales", b =>
                 {
                     b.Property<string>("Id")
@@ -830,22 +866,8 @@ namespace neurosintergia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Cantidad")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("Created_At")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Dosis")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Frecuencia")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Medicamento")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MedicoId")
                         .IsRequired()
@@ -858,15 +880,9 @@ namespace neurosintergia.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("PeriodoTiempo")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Presentacion")
+                    b.Property<string>("Tratamiento")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("SinSuspender")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
