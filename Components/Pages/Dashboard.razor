@@ -85,6 +85,7 @@
             PendingRequests = await AuthViewsService.GetRequestsByStatus("Pending");
             DeclinedRequests = await AuthViewsService.GetRequestsByStatus("Declined");
             ApprovedRequests = await AuthViewsService.GetRequestsByStatus("Approved");
+            
             // For Doctor AuthorizeView
             if (User is not null) UserSignUpStatus = await AuthViewsService.GetUserStatus(User.Id);
         }
