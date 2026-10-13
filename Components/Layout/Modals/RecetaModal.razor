@@ -1,0 +1,98 @@
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@using neurosintergia.Components.Account.Shared
+@using neurosintergia.Data
+@using neurosintergia.Data.Models
+
+@inject IDbContextFactory<ApplicationDbContext> Factory
+
+@if (PrescriptionModel is null)
+{
+    <p>Preparando nueva receta...</p>
+}
+else
+{
+    <button commandfor="new-prescription" command="show-modal">Guardar</button>
+    <dialog id="new-prescription">
+        <StatusMessage Message="@message" />
+        <EditForm Model="PrescriptionModel" OnValidSubmit="OnValidSubmitAsync" FormName="new-prescription">
+            <DataAnnotationsValidator />
+             
+        </EditForm>
+    </dialog>
+}
+
+@code 
+{
+    [Parameter]
+    public required string DoctorId { get; set; }
+    private string? message { get; set; }
+    private Prescription? PrescriptionModel { get; set; }
+    private List<COFEPRIS_Medicamentos> AvailableMedications { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        PrescriptionModel ??= new();
+        using var context = await Factory.CreateDbContextAsync();
+
+        // Check enabled medication groups
+        var DoctorPermissions = await context.Medicos_Funciones
+        .AsNoTracking()
+        .SingleOrDefaultAsync(row => row.MedicoId == DoctorId);
+
+        if (DoctorPermissions is null)
+        {
+            AvailableMedications = [];
+            return;
+        }
+
+        // Fetch medications based on enabled groups
+        var EnabledGroups = new List<string>();
+        
+        if (DoctorPermissions.Grupo_I) EnabledGroups.Add("I");
+        if (DoctorPermissions.Grupo_II) EnabledGroups.Add("II");
+        if (DoctorPermissions.Grupo_III) EnabledGroups.Add("III");
+        if (DoctorPermissions.Grupo_IV) EnabledGroups.Add("IV");
+        if (DoctorPermissions.Grupo_V) EnabledGroups.Add("V");
+        if (DoctorPermissions.Grupo_VI) EnabledGroups.Add("VI");
+
+        AvailableMedications = await context.COFEPRIS_Medicamentos
+        .AsNoTracking()
+        .Where(m => EnabledGroups.Contains(m.Fraccion))
+        .OrderBy(m => m.Medicamento)
+        .ToListAsync();
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+
+    }
+
+    private sealed class Prescription
+    {
+        [Required(ErrorMessage = "")]
+        public string Medicamento { get; set; } = "";
+        [Required(ErrorMessage = "")]
+        public string Dosis { get; set; } = "";
+        [Required(ErrorMessage = "")]
+        public string Presentacion { get; set; } = "";
+        [Required(ErrorMessage = "")]
+        public int Cantidad { get; set; } = 1;
+        [Required(ErrorMessage = "")]
+        public int Frecuencia { get; set; } = 1;
+        [Required(ErrorMessage = "")]
+        public int Periodo { get; set; } = 1;
+        public bool SinSuspender { get; set; } = false;
+        public string? Nota { get; set; }
+    }
+    private record EnabledGroups(
+        bool Group_I,
+        bool Group_II,
+        bool Group_III,
+        bool Group_IV,
+        bool Group_V,
+        bool Group_VI
+    );
+}
