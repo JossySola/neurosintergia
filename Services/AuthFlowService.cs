@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using neurosintergia.Data;
 using System.Security.Cryptography;
-using Microsoft.Extensions.Logging;
 
 namespace neurosintergia.Services;
 
