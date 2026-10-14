@@ -3,8 +3,17 @@
 @rendermode InteractiveServer
 
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using neurosintergia.Components.Account.Shared
+@using neurosintergia.Data
+@using neurosintergia.Data.Models
 @using neurosintergia.Data.Static
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject ILogger<Patient> Logger
+@inject IDbContextFactory<ApplicationDbContext> Context
 
 @if (RegistroModel is null)
 {
@@ -234,6 +243,7 @@ else
                 <label>Resumen<InputTextArea @bind-Value="RegistroModel.Resumen" id="resumen" /></label>
                 <label>Notas<InputTextArea @bind-Value="RegistroModel.Notas" id="notas" /></label>
             </fieldset>
+            <button type="submit" disabled=@isSubmitting>Crear</button>
         </EditForm>
     </section>   
 }
@@ -242,6 +252,7 @@ else
 {
     private Registro? RegistroModel { get; set; }
     private string? message;
+    private bool isSubmitting { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -250,8 +261,145 @@ else
 
     private async Task OnValidSubmitAsync()
     {
-        
+        ApplicationUser? patientUser = null;
+        try
+        {
+            isSubmitting = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var doctor = await UserManager.GetUserAsync(authState.User);
+            if (doctor is null || RegistroModel is null)
+            {
+                message = "Error: Debes iniciar sesión para registrar un paciente.";
+                return;
+            }
+
+            // Pacientes.Id is also a foreign key to AspNetUsers, so create the
+            // identity row that owns this patient profile before saving it.
+            patientUser = new ApplicationUser
+            {
+                UserName = $"patient-{Guid.NewGuid():N}"
+            };
+            var identityResult = await UserManager.CreateAsync(patientUser);
+            if (!identityResult.Succeeded)
+            {
+                message = $"Error: No se pudo crear el registro del paciente. {string.Join(" ", identityResult.Errors.Select(error => error.Description))}";
+                return;
+            }
+
+            using var db = await Context.CreateDbContextAsync();
+
+            var newPatient = new Pacientes
+            {
+                Created_At = DateTime.UtcNow,
+                Id = patientUser.Id,
+                Nombre = RegistroModel.Nombre,
+                ApellidoPaterno = RegistroModel.ApellidoPaterno,
+                ApellidoMaterno = Optional(RegistroModel.ApellidoMaterno),
+                CURP = RegistroModel.CURP,
+                Sexo = RegistroModel.Sexo,
+                EstadoNacimiento = RegistroModel.EstadoNacimiento,
+                MunicipioNacimiento = RegistroModel.MunicipioNacimiento,
+                FechaNacimiento = RegistroModel.FechaNacimiento,
+                Calle = RegistroModel.Calle,
+                NumExt = RegistroModel.NumExt,
+                NumInt = Optional(RegistroModel.NumInt),
+                Colonia = RegistroModel.Colonia,
+                CodigoPostal = RegistroModel.CodigoPostal,
+                Estado = RegistroModel.Estado,
+                Municipio = RegistroModel.Municipio,
+                Telefono = RegistroModel.Telefono,
+                TelefonoCelular = Optional(RegistroModel.TelefonoCelular),
+                Email = Optional(RegistroModel.Email),
+                ContactoEmergenciaI = RegistroModel.ContactoEmergenciaI,
+                TelefonoEmergenciaI = RegistroModel.TelefonoEmergenciaI,
+                ContactoEmergenciaII = Optional(RegistroModel.ContactoEmergenciaII),
+                TelefonoEmergenciaII = Optional(RegistroModel.TelefonoEmergenciaII),
+                HabitaEn = Optional(RegistroModel.HabitaEn),
+                ViveCon = Optional(RegistroModel.ViveCon),
+                Profesion = Optional(RegistroModel.Profesion),
+                GrupoEtnico = Optional(RegistroModel.GrupoEtnico),
+                HF_Diabetes = RegistroModel.HF_Diabetes,
+                HF_Hipertension = RegistroModel.HF_Hipertension,
+                HF_Artritis = RegistroModel.HF_Artritis,
+                HF_DoloresCabeza = RegistroModel.HF_DoloresCabeza,
+                HF_Epilepsia = RegistroModel.HF_Epilepsia,
+                HF_Alcohol = RegistroModel.HF_Alcohol,
+                HF_Drogadiccion = RegistroModel.HF_Drogadiccion,
+                HF_Tiroides = RegistroModel.HF_Tiroides,
+                HF_Alzheimer = RegistroModel.HF_Alzheimer,
+                HF_Depresion = RegistroModel.HF_Depresion,
+                HF_Ansiedad = RegistroModel.HF_Ansiedad,
+                HF_Demencia = RegistroModel.HF_Demencia,
+                HF_Cancer = RegistroModel.HF_Cancer,
+                HF_Corazon = RegistroModel.HF_Corazon,
+                HF_Higado = RegistroModel.HF_Higado,
+                HF_Rinon = RegistroModel.HF_Rinon,
+                HF_Anemia = RegistroModel.HF_Anemia,
+                HF_Gastritis = RegistroModel.HF_Gastritis,
+                HF_Otros = ToPacienteOtros(RegistroModel.HF_Otros),
+                PP_Diabetes = RegistroModel.PP_Diabetes,
+                PP_Hipertension = RegistroModel.PP_Hipertension,
+                PP_Artritis = RegistroModel.PP_Artritis,
+                PP_DoloresCabeza = RegistroModel.PP_DoloresCabeza,
+                PP_Epilepsia = RegistroModel.PP_Epilepsia,
+                PP_Alcohol = RegistroModel.PP_Alcohol,
+                PP_Drogadiccion = RegistroModel.PP_Drogadiccion,
+                PP_Tiroides = RegistroModel.PP_Tiroides,
+                PP_Alzheimer = RegistroModel.PP_Alzheimer,
+                PP_Depresion = RegistroModel.PP_Depresion,
+                PP_Ansiedad = RegistroModel.PP_Ansiedad,
+                PP_Demencia = RegistroModel.PP_Demencia,
+                PP_Cancer = RegistroModel.PP_Cancer,
+                PP_Corazon = RegistroModel.PP_Corazon,
+                PP_Higado = RegistroModel.PP_Higado,
+                PP_Rinon = RegistroModel.PP_Rinon,
+                PP_Anemia = RegistroModel.PP_Anemia,
+                PP_Gastritis = RegistroModel.PP_Gastritis,
+                PP_VIH = RegistroModel.PP_VIH,
+                PP_Otros = ToPacienteOtros(RegistroModel.PP_Otros),
+                PNP_Alcohol = RegistroModel.PNP_Alcohol,
+                PNP_Tabaco = RegistroModel.PNP_Tabaco,
+                PNP_Cafeina = RegistroModel.PNP_Cafeina,
+                PNP_Sustancias = RegistroModel.PNP_Sustancias,
+                PNP_Otros = ToPacienteOtros(RegistroModel.PNP_Otros),
+                Padecimiento = Optional(RegistroModel.Padecimiento),
+                Tratamiento = Optional(RegistroModel.Tratamiento),
+                Resumen = Optional(RegistroModel.Resumen),
+                Notas = Optional(RegistroModel.Notas)
+            };
+
+            await db.Pacientes.AddAsync(newPatient);
+            await db.SaveChangesAsync();
+            patientUser = null; // The user row is now referenced by the saved patient profile.
+            message = "Paciente registrado correctamente.";
+        }
+        catch (Exception Error)
+        {
+            Logger.LogError(Error, "Error al registrar un paciente");
+            message = "Error: No se pudo guardar el registro del paciente.";
+            if (patientUser is not null)
+            {
+                await UserManager.DeleteAsync(patientUser);
+            }
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
+
+    private static string? Optional(string value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static List<PacienteOtro> ToPacienteOtros(IEnumerable<Otros> otros) =>
+        otros
+            .Where(otro => !string.IsNullOrWhiteSpace(otro.Opcion) || !string.IsNullOrWhiteSpace(otro.Valor))
+            .Select(otro => new PacienteOtro
+            {
+                Opcion = otro.Opcion.Trim(),
+                Valor = otro.Valor.Trim()
+            })
+            .ToList();
     private static void AddOtro(List<Otros> otros) => otros.Add(new());
 
     private static void RemoveOtro(List<Otros> otros, int index)
