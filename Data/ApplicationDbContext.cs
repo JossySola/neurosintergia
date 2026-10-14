@@ -126,5 +126,35 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             )
             .Metadata.SetValueComparer(otrosComparer);
         });
+
+        var pacienteOtrosComparer = new ValueComparer<List<PacienteOtro>>(
+            (a, b) => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null)
+                == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null),
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(),
+            v => JsonSerializer.Deserialize<List<PacienteOtro>>(
+                JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                (JsonSerializerOptions?)null) ?? new()
+        );
+
+        builder.Entity<Pacientes>(entity =>
+        {
+            entity.Property(p => p.HF_Otros)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => JsonSerializer.Deserialize<List<PacienteOtro>>(v, (JsonSerializerOptions?)null) ?? new())
+                .Metadata.SetValueComparer(pacienteOtrosComparer);
+
+            entity.Property(p => p.PP_Otros)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => JsonSerializer.Deserialize<List<PacienteOtro>>(v, (JsonSerializerOptions?)null) ?? new())
+                .Metadata.SetValueComparer(pacienteOtrosComparer);
+
+            entity.Property(p => p.PNP_Otros)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => JsonSerializer.Deserialize<List<PacienteOtro>>(v, (JsonSerializerOptions?)null) ?? new())
+                .Metadata.SetValueComparer(pacienteOtrosComparer);
+        });
     }
 }
