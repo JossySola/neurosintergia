@@ -798,9 +798,6 @@ namespace neurosintergia.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Celular")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("CodigoPostal")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -822,10 +819,86 @@ namespace neurosintergia.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EstadoNacimiento")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateOnly>("FechaNacimiento")
                         .HasColumnType("date");
 
-                    b.Property<string>("LugarNacimiento")
+                    b.Property<string>("GrupoEtnico")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("HF_Alcohol")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Alzheimer")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Anemia")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Ansiedad")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Artritis")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Cancer")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Corazon")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Demencia")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Depresion")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Diabetes")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_DoloresCabeza")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Drogadiccion")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Epilepsia")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Gastritis")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Higado")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Hipertension")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("HF_Otros")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("HF_Rinon")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HF_Tiroides")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("HabitaEn")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Municipio")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MunicipioNacimiento")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -833,11 +906,100 @@ namespace neurosintergia.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Notas")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("NumExt")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NumInt")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PNP_Alcohol")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PNP_Cafeina")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PNP_Otros")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PNP_Sustancias")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PNP_Tabaco")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Alcohol")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Alzheimer")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Anemia")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Ansiedad")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Artritis")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Cancer")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Corazon")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Demencia")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Depresion")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Diabetes")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_DoloresCabeza")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Drogadiccion")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Epilepsia")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Gastritis")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Higado")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Hipertension")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PP_Otros")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PP_Rinon")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_Tiroides")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PP_VIH")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Padecimiento")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Profesion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Resumen")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Sexo")
@@ -848,11 +1010,20 @@ namespace neurosintergia.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TelefonoCelular")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("TelefonoEmergenciaI")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TelefonoEmergenciaII")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Tratamiento")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ViveCon")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

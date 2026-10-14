@@ -1,0 +1,367 @@
+@page "/New/Patient"
+
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using neurosintergia.Components.Account.Shared
+@using neurosintergia.Data.Static
+
+@if (RegistroModel is null)
+{
+    <p>Preparando registro...</p>
+}
+else
+{
+    <section>
+        <StatusMessage Message="@message" />
+        <EditForm Model="RegistroModel" OnValidSubmit="OnValidSubmitAsync" FormName="new-patient">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <fieldset>
+                <h1>Información general</h1>
+                <label>
+                    Nombre
+                    <InputText @bind-Value="RegistroModel.Nombre" id="nombre" required />
+                </label>
+                <label>
+                    Apellido paterno
+                    <InputText @bind-Value="RegistroModel.ApellidoPaterno" id="apellido-paterno" required />
+                </label>
+                <label>
+                    Apellido materno
+                    <InputText @bind-Value="RegistroModel.ApellidoMaterno" id="apellido-materno" />
+                </label>
+                <label>
+                    CURP
+                    <InputText @bind-Value="RegistroModel.CURP" id="curp" required />
+                </label>
+                <label>
+                    Sexo
+                    <InputSelect @bind-Value="RegistroModel.Sexo" id="sexo" required>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                    </InputSelect>
+                </label>
+                <label>
+                    Estado de nacimiento
+                    <InputSelect @bind-Value="RegistroModel.EstadoNacimiento" id="estado-nacimiento" required>
+                        @foreach (var Estado in Ubicaciones.Estados)
+                        {
+                            <option value="@Estado.Nombre">@Estado.Nombre</option>
+                        }
+                    </InputSelect>
+                </label>
+                <label>
+                    Municipio de nacimiento
+                    <InputSelect @bind-Value="RegistroModel.MunicipioNacimiento" id="municipio-nacimiento" required>
+                        @foreach(var Estado in Ubicaciones.Estados)
+                        {
+                            if (Estado.Nombre == RegistroModel.EstadoNacimiento)
+                            {
+                                foreach (var Municipio in Estado.Municipios)
+                                {
+                                    <option value="@Municipio">@Municipio</option>
+                                }
+                            }
+                        }
+                    </InputSelect>
+                </label>
+                <label>
+                    Fecha de nacimiento
+                    <InputDate @bind-Value="RegistroModel.FechaNacimiento" id="fecha-nacimiento" required />
+                </label>
+                <label>
+                    Calle
+                    <InputText @bind-Value="RegistroModel.Calle" id="calle" required />
+                </label>
+                <label>
+                    Número exterior
+                    <InputText @bind-Value="RegistroModel.NumExt" id="num-ext" required />
+                </label>
+                <label>
+                    Número interior
+                    <InputText @bind-Value="RegistroModel.NumInt" id="num-int" />
+                </label>
+                <label>
+                    Colonia
+                    <InputText @bind-Value="RegistroModel.Colonia" id="colonia" required />
+                </label>
+                <label>
+                    Código Postal
+                    <InputText @bind-Value="RegistroModel.CodigoPostal" id="codigo-postal" required />
+                </label>
+                <label>
+                    Estado de residencia
+                    <InputSelect @bind-Value="RegistroModel.Estado" id="estado-residencia" required>
+                        @foreach (var Estado in Ubicaciones.Estados)
+                        {
+                            <option value="@Estado.Nombre">@Estado.Nombre</option>
+                        }
+                    </InputSelect>
+                </label>
+                <label>
+                    Municipio de residencia
+                    <InputSelect @bind-Value="RegistroModel.Municipio" id="municipio-residencia" required>
+                        @foreach(var Estado in Ubicaciones.Estados)
+                        {
+                            if (Estado.Nombre == RegistroModel.Estado)
+                            {
+                                foreach (var Municipio in Estado.Municipios)
+                                {
+                                    <option value="@Municipio">@Municipio</option>
+                                }
+                            }
+                        }
+                    </InputSelect>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <h1>Información de contacto</h1>
+                <label>Teléfono<InputText @bind-Value="RegistroModel.Telefono" id="telefono" required /></label>
+                <label>Teléfono celular<InputText @bind-Value="RegistroModel.TelefonoCelular" id="telefono-celular" /></label>
+                <label>Correo electrónico<InputText @bind-Value="RegistroModel.Email" id="email" type="email" /></label>
+                <label>Contacto de emergencia I<InputText @bind-Value="RegistroModel.ContactoEmergenciaI" id="contacto-emergencia-i" required /></label>
+                <label>Teléfono de emergencia I<InputText @bind-Value="RegistroModel.TelefonoEmergenciaI" id="telefono-emergencia-i" required /></label>
+                <label>Contacto de emergencia II<InputText @bind-Value="RegistroModel.ContactoEmergenciaII" id="contacto-emergencia-ii" /></label>
+                <label>Teléfono de emergencia II<InputText @bind-Value="RegistroModel.TelefonoEmergenciaII" id="telefono-emergencia-ii" /></label>
+            </fieldset>
+
+            <fieldset>
+                <h1>Datos personales</h1>
+                <label>¿Dónde habita?<InputText @bind-Value="RegistroModel.HabitaEn" id="habita-en" /></label>
+                <label>¿Con quién vive?<InputText @bind-Value="RegistroModel.ViveCon" id="vive-con" /></label>
+                <label>Profesión<InputText @bind-Value="RegistroModel.Profesion" id="profesion" /></label>
+                <label>Grupo étnico<InputText @bind-Value="RegistroModel.GrupoEtnico" id="grupo-etnico" /></label>
+            </fieldset>
+
+            <fieldset>
+                <h1>Antecedentes heredofamiliares</h1>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Diabetes" /> Diabetes</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Hipertension" /> Hipertensión</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Artritis" /> Artritis</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_DoloresCabeza" /> Dolores de cabeza</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Epilepsia" /> Epilepsia</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Alcohol" /> Alcoholismo</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Drogadiccion" /> Drogadicción</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Tiroides" /> Enfermedad de tiroides</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Alzheimer" /> Alzheimer</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Depresion" /> Depresión</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Ansiedad" /> Ansiedad</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Demencia" /> Demencia</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Cancer" /> Cáncer</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Corazon" /> Enfermedad del corazón</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Higado" /> Enfermedad del hígado</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Rinon" /> Enfermedad del riñón</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Anemia" /> Anemia</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.HF_Gastritis" /> Gastritis</label>
+                <div class="otros-fields">
+                    <h2>Otros antecedentes heredofamiliares</h2>
+                    @for (var i = 0; i < RegistroModel.HF_Otros.Count; i++)
+                    {
+                        var index = i;
+                        <div class="otros-row">
+                            <InputText @bind-Value="RegistroModel.HF_Otros[index].Opcion" placeholder="Opción" aria-label="Opción heredofamiliar" />
+                            <InputText @bind-Value="RegistroModel.HF_Otros[index].Valor" placeholder="Valor" aria-label="Valor heredofamiliar" />
+                            <button type="button" @onclick="() => RemoveOtro(RegistroModel.HF_Otros, index)" aria-label="Eliminar antecedente">−</button>
+                        </div>
+                    }
+                    <button type="button" @onclick="() => AddOtro(RegistroModel.HF_Otros)">+</button>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h1>Antecedentes personales patológicos</h1>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Diabetes" /> Diabetes</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Hipertension" /> Hipertensión</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Artritis" /> Artritis</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_DoloresCabeza" /> Dolores de cabeza</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Epilepsia" /> Epilepsia</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Alcohol" /> Alcoholismo</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Drogadiccion" /> Drogadicción</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Tiroides" /> Enfermedad de tiroides</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Alzheimer" /> Alzheimer</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Depresion" /> Depresión</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Ansiedad" /> Ansiedad</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Demencia" /> Demencia</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Cancer" /> Cáncer</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Corazon" /> Enfermedad del corazón</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Higado" /> Enfermedad del hígado</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Rinon" /> Enfermedad del riñón</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Anemia" /> Anemia</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_Gastritis" /> Gastritis</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PP_VIH" /> VIH</label>
+                <div class="otros-fields">
+                    <h2>Otros antecedentes personales patológicos</h2>
+                    @for (var i = 0; i < RegistroModel.PP_Otros.Count; i++)
+                    {
+                        var index = i;
+                        <div class="otros-row">
+                            <InputText @bind-Value="RegistroModel.PP_Otros[index].Opcion" placeholder="Opción" aria-label="Opción personal patológica" />
+                            <InputText @bind-Value="RegistroModel.PP_Otros[index].Valor" placeholder="Valor" aria-label="Valor personal patológico" />
+                            <button type="button" @onclick="() => RemoveOtro(RegistroModel.PP_Otros, index)" aria-label="Eliminar antecedente">−</button>
+                        </div>
+                    }
+                    <button type="button" @onclick="() => AddOtro(RegistroModel.PP_Otros)">+</button>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h1>Antecedentes personales no patológicos</h1>
+                <label><InputCheckbox @bind-Value="RegistroModel.PNP_Alcohol" /> Alcohol</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PNP_Tabaco" /> Tabaco</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PNP_Cafeina" /> Cafeína</label>
+                <label><InputCheckbox @bind-Value="RegistroModel.PNP_Sustancias" /> Sustancias</label>
+                <div class="otros-fields">
+                    <h2>Otras sustancias</h2>
+                    @for (var i = 0; i < RegistroModel.PNP_Otros.Count; i++)
+                    {
+                        var index = i;
+                        <div class="otros-row">
+                            <InputText @bind-Value="RegistroModel.PNP_Otros[index].Opcion" placeholder="Opción" aria-label="Opción de sustancia" />
+                            <InputText @bind-Value="RegistroModel.PNP_Otros[index].Valor" placeholder="Valor" aria-label="Valor de sustancia" />
+                            <button type="button" @onclick="() => RemoveOtro(RegistroModel.PNP_Otros, index)" aria-label="Eliminar antecedente">−</button>
+                        </div>
+                    }
+                    <button type="button" @onclick="() => AddOtro(RegistroModel.PNP_Otros)">+</button>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <h1>Información clínica</h1>
+                <label>Padecimiento<InputTextArea @bind-Value="RegistroModel.Padecimiento" id="padecimiento" /></label>
+                <label>Tratamiento<InputTextArea @bind-Value="RegistroModel.Tratamiento" id="tratamiento" /></label>
+                <label>Resumen<InputTextArea @bind-Value="RegistroModel.Resumen" id="resumen" /></label>
+                <label>Notas<InputTextArea @bind-Value="RegistroModel.Notas" id="notas" /></label>
+            </fieldset>
+        </EditForm>
+    </section>   
+}
+
+@code
+{
+    private Registro? RegistroModel { get; set; }
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        RegistroModel ??= new();
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        
+    }
+    private static void AddOtro(List<Otros> otros) => otros.Add(new());
+
+    private static void RemoveOtro(List<Otros> otros, int index)
+    {
+        if (index >= 0 && index < otros.Count)
+        {
+            otros.RemoveAt(index);
+        }
+    }
+    private sealed class Registro
+    {
+        [Required]
+        public string Nombre { get; set; } = "";
+        [Required]
+        public string ApellidoPaterno { get; set; } = "";
+        [Required]
+        public string ApellidoMaterno { get; set; } = "";
+        [Required]
+        [Length(18, 18)]
+        public string CURP { get; set; } = "";
+        [Required]
+        public string Sexo { get; set; } = "";
+        [Required]
+        public string MunicipioNacimiento { get; set; } = "";
+        [Required]
+        public string EstadoNacimiento { get; set; } = "";
+        [Required]
+        public DateOnly FechaNacimiento { get; set; }
+        [Required]
+        public string Calle { get; set; } = "";
+        [Required]
+        public string NumExt { get; set; } = "";
+        public string NumInt { get; set; } = "";
+        [Required]
+        public string Colonia { get; set; } = "";
+        [Required]
+        public string CodigoPostal { get; set; } = "";
+        [Required]
+        public string Estado { get; set; } = "";
+        [Required]
+        public string Municipio { get; set; } = "";
+        [Required]
+        [Length(10, 10)]
+        public string Telefono { get; set; } = "";
+        public string TelefonoCelular { get; set; } = "";
+        [EmailAddress]
+        public string Email { get; set; } = "";
+        [Required]
+        public string ContactoEmergenciaI { get; set; } = "";
+        [Required]
+        [Length(10, 10)]
+        public string TelefonoEmergenciaI { get; set; } = "";
+        public string ContactoEmergenciaII { get; set; } = "";
+        public string TelefonoEmergenciaII { get; set; } = "";
+        public string HabitaEn { get; set; } = "";
+        public string ViveCon { get; set; } = "";
+        public string Profesion { get; set; } = "";
+        public string GrupoEtnico { get; set; } = "";
+        public bool HF_Diabetes { get; set; }
+        public bool HF_Hipertension { get; set; }
+        public bool HF_Artritis { get; set; }
+        public bool HF_DoloresCabeza { get; set; }
+        public bool HF_Epilepsia { get; set; }
+        public bool HF_Alcohol { get; set; }
+        public bool HF_Drogadiccion { get; set; }
+        public bool HF_Tiroides { get; set; }
+        public bool HF_Alzheimer { get; set; }
+        public bool HF_Depresion { get; set; }
+        public bool HF_Ansiedad { get; set; }
+        public bool HF_Demencia { get; set; }
+        public bool HF_Cancer { get; set; }
+        public bool HF_Corazon { get; set; }
+        public bool HF_Higado { get; set; }
+        public bool HF_Rinon { get; set; }
+        public bool HF_Anemia { get; set; }
+        public bool HF_Gastritis { get; set; }
+        public List<Otros> HF_Otros { get; set; } = [];
+        public bool PP_Diabetes { get; set; }
+        public bool PP_Hipertension { get; set; }
+        public bool PP_Artritis { get; set; }
+        public bool PP_DoloresCabeza { get; set; }
+        public bool PP_Epilepsia { get; set; }
+        public bool PP_Alcohol { get; set; }
+        public bool PP_Drogadiccion { get; set; }
+        public bool PP_Tiroides { get; set; }
+        public bool PP_Alzheimer { get; set; }
+        public bool PP_Depresion { get; set; }
+        public bool PP_Ansiedad { get; set; }
+        public bool PP_Demencia { get; set; }
+        public bool PP_Cancer { get; set; }
+        public bool PP_Corazon { get; set; }
+        public bool PP_Higado { get; set; }
+        public bool PP_Rinon { get; set; }
+        public bool PP_Anemia { get; set; }
+        public bool PP_Gastritis { get; set; }
+        public bool PP_VIH { get; set; }
+        public List<Otros> PP_Otros { get; set; } = [];
+        public bool PNP_Alcohol { get; set; }
+        public bool PNP_Tabaco { get; set; }
+        public bool PNP_Cafeina { get; set; }
+        public bool PNP_Sustancias { get; set; }
+        public List<Otros> PNP_Otros { get; set; } = [];
+        public string Padecimiento { get; set; } = "";
+        public string Tratamiento { get; set; } = "";
+        public string Resumen { get; set; } = "";
+        public string Notas { get; set; } = "";
+    }
+    private sealed class Otros
+    {
+        public string Opcion { get; set; } = "";
+        public string Valor { get; set; } = "";
+    }
+}
